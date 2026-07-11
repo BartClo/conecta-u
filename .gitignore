@@ -1,0 +1,22 @@
+node_modules/
+.env
+.env.local
+
+# ruflo runtime/local data (not shared, regenerated per machine)
+.claude-flow/data/
+.claude-flow/logs/
+.claude-flow/sessions/
+.claude-flow/metrics/
+.claude-flow/daemon-state.json
+.claude-flow/daemon.pid
+.swarm/
+ruvector.db
+*.db
+*.db-shm
+*.db-wal
+
+# Claude Code / ruflo tooling (local only, not for the repo)
+CLAUDE.md
+.claude/
+.claude-flow/
+.mcp.json
