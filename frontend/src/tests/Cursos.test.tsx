@@ -80,4 +80,72 @@ describe("Cursos page", () => {
       ),
     );
   });
+
+  it("creates a new semestre and selects it", async () => {
+    const NUEVO_SEMESTRE = { id: "s2", nombre: "2026-2", fecha_inicio: "2026-08-01", fecha_fin: "2026-12-15" };
+    (apiFetch as ReturnType<typeof vi.fn>).mockImplementation((path: string, opts?: { method?: string }) => {
+      if (path === "/api/semestres" && opts?.method === "POST") return Promise.resolve(NUEVO_SEMESTRE);
+      if (path === "/api/semestres") return Promise.resolve([SEMESTRE]);
+      if (path.startsWith("/api/cursos")) return Promise.resolve([CURSO]);
+      return Promise.reject(new Error(`unexpected path ${path}`));
+    });
+
+    render(
+      <MemoryRouter>
+        <Cursos />
+      </MemoryRouter>,
+    );
+
+    await screen.findByText("Cálculo II");
+    fireEvent.click(screen.getByRole("button", { name: /nuevo semestre/i }));
+    fireEvent.change(screen.getByLabelText(/nombre/i), { target: { value: "2026-2" } });
+    fireEvent.change(screen.getByLabelText(/inicio/i), { target: { value: "2026-08-01" } });
+    fireEvent.change(screen.getByLabelText(/fin/i), { target: { value: "2026-12-15" } });
+    fireEvent.click(screen.getByRole("button", { name: /guardar/i }));
+
+    await waitFor(() =>
+      expect(apiFetch).toHaveBeenCalledWith(
+        "/api/semestres",
+        expect.objectContaining({ method: "POST" }),
+      ),
+    );
+    expect(await screen.findByRole("option", { name: "2026-2" })).toBeInTheDocument();
+  });
+
+  it("switches the selected semestre and reloads its cursos", async () => {
+    const SEMESTRE_2 = { id: "s2", nombre: "2026-2", fecha_inicio: "2026-08-01", fecha_fin: "2026-12-15" };
+    const CURSO_2 = { ...CURSO, id: "c2", semestre_id: "s2", nombre: "Física I" };
+    (apiFetch as ReturnType<typeof vi.fn>).mockImplementation((path: string) => {
+      if (path === "/api/semestres") return Promise.resolve([SEMESTRE, SEMESTRE_2]);
+      if (path === "/api/cursos?semestre_id=s2") return Promise.resolve([CURSO_2]);
+      if (path.startsWith("/api/cursos")) return Promise.resolve([CURSO]);
+      return Promise.reject(new Error(`unexpected path ${path}`));
+    });
+
+    render(
+      <MemoryRouter>
+        <Cursos />
+      </MemoryRouter>,
+    );
+
+    await screen.findByText("Cálculo II");
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "s2" } });
+
+    expect(await screen.findByText("Física I")).toBeInTheDocument();
+  });
+
+  it("closes the curso modal without submitting when cancel is clicked", async () => {
+    mockList();
+    render(
+      <MemoryRouter>
+        <Cursos />
+      </MemoryRouter>,
+    );
+
+    await screen.findByText("Cálculo II");
+    fireEvent.click(screen.getByRole("button", { name: /nuevo curso/i }));
+    fireEvent.click(screen.getByRole("button", { name: /cancelar/i }));
+
+    expect(screen.queryByRole("button", { name: /guardar/i })).not.toBeInTheDocument();
+  });
 });

@@ -68,4 +68,41 @@ describe("CursoDetalle page", () => {
 
     await waitFor(() => expect(screen.getByText("Cursos page")).toBeInTheDocument());
   });
+
+  it("does not delete when the confirm dialog is cancelled", async () => {
+    (apiFetch as ReturnType<typeof vi.fn>).mockResolvedValue(CURSO);
+    vi.stubGlobal("confirm", vi.fn().mockReturnValue(false));
+    renderPage();
+
+    await screen.findByText("Cálculo II");
+    fireEvent.click(screen.getByRole("button", { name: /borrar/i }));
+
+    expect(apiFetch).not.toHaveBeenCalledWith(
+      "/api/cursos/c1",
+      expect.objectContaining({ method: "DELETE" }),
+    );
+  });
+
+  it("closes the edit modal without submitting when cancel is clicked", async () => {
+    (apiFetch as ReturnType<typeof vi.fn>).mockResolvedValue(CURSO);
+    renderPage();
+
+    await screen.findByText("Cálculo II");
+    fireEvent.click(screen.getByRole("button", { name: /editar/i }));
+    fireEvent.click(screen.getByRole("button", { name: /cancelar/i }));
+
+    expect(screen.queryByRole("button", { name: /guardar/i })).not.toBeInTheDocument();
+  });
+
+  it("does not fetch when the route has no id", () => {
+    render(
+      <MemoryRouter initialEntries={["/cursos"]}>
+        <Routes>
+          <Route path="/cursos" element={<CursoDetalle />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(apiFetch).not.toHaveBeenCalled();
+  });
 });

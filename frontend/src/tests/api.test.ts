@@ -41,4 +41,16 @@ describe("apiFetch", () => {
     const result = await apiFetch("/api/x", { method: "DELETE" });
     expect(result).toBeUndefined();
   });
+
+  it("throws when the response is not ok", async () => {
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({ ok: false, status: 500 });
+    await expect(apiFetch("/api/x")).rejects.toThrow("API request failed: 500");
+  });
+
+  it("omits the Authorization header when there is no session", async () => {
+    (supabase.auth.getSession as ReturnType<typeof vi.fn>).mockResolvedValue({ data: { session: null } });
+    await apiFetch("/api/x");
+    const [, init] = (fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(init.headers.Authorization).toBeUndefined();
+  });
 });
