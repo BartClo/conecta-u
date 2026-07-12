@@ -105,4 +105,11 @@ describe("CursoDetalle page", () => {
 
     expect(apiFetch).not.toHaveBeenCalled();
   });
+
+  it("shows a not-found message when the curso fails to load", async () => {
+    (apiFetch as ReturnType<typeof vi.fn>).mockRejectedValue(new Error("404"));
+    renderPage();
+
+    expect(await screen.findByText(/curso no encontrado/i)).toBeInTheDocument();
+  });
 });

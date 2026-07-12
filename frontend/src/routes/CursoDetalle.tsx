@@ -9,11 +9,14 @@ export default function CursoDetalle() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [curso, setCurso] = useState<Curso | null>(null);
+  const [notFound, setNotFound] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
 
   useEffect(() => {
     if (!id) return;
-    apiFetch<Curso>(`/api/cursos/${id}`).then(setCurso);
+    apiFetch<Curso>(`/api/cursos/${id}`)
+      .then(setCurso)
+      .catch(() => setNotFound(true));
   }, [id]);
 
   function handleEdit(data: { nombre: string; codigo: string; profesor: string | null; color: string }) {
@@ -33,6 +36,7 @@ export default function CursoDetalle() {
     apiFetch(`/api/cursos/${curso.id}`, { method: "DELETE" }).then(() => navigate("/cursos"));
   }
 
+  if (notFound) return <p className="p-6 text-gray-500">Curso no encontrado.</p>;
   if (!curso) return null;
 
   return (
