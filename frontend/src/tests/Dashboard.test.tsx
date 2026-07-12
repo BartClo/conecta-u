@@ -9,7 +9,10 @@ vi.mock("../lib/supabase", () => ({ supabase: { auth: { signOut: vi.fn() } } }))
 
 describe("Dashboard", () => {
   it("greets the user with the name from /api/me", async () => {
-    (apiFetch as ReturnType<typeof vi.fn>).mockResolvedValue({ name: "Ada Lovelace", email: "ada@x.com" });
+    (apiFetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      name: "Ada Lovelace",
+      email: "ada@x.com",
+    });
     render(<Dashboard />);
     expect(await screen.findByText(/hola, ada lovelace/i)).toBeInTheDocument();
   });
