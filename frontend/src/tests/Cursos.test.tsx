@@ -6,7 +6,12 @@ import { apiFetch } from "../lib/api";
 
 vi.mock("../lib/api", () => ({ apiFetch: vi.fn() }));
 
-const SEMESTRE = { id: "s1", nombre: "2026-1", fecha_inicio: "2000-01-01", fecha_fin: "2999-01-01" };
+const SEMESTRE = {
+  id: "s1",
+  nombre: "2026-1",
+  fecha_inicio: "2000-01-01",
+  fecha_fin: "2999-01-01",
+};
 const CURSO = {
   id: "c1",
   semestre_id: "s1",
@@ -54,12 +59,15 @@ describe("Cursos page", () => {
 
   it("creates a new curso and refreshes the list", async () => {
     mockList();
-    (apiFetch as ReturnType<typeof vi.fn>).mockImplementation((path: string, opts?: { method?: string }) => {
-      if (path === "/api/semestres") return Promise.resolve([SEMESTRE]);
-      if (path.startsWith("/api/cursos") && opts?.method === "POST") return Promise.resolve(CURSO);
-      if (path.startsWith("/api/cursos")) return Promise.resolve([CURSO]);
-      return Promise.reject(new Error(`unexpected path ${path}`));
-    });
+    (apiFetch as ReturnType<typeof vi.fn>).mockImplementation(
+      (path: string, opts?: { method?: string }) => {
+        if (path === "/api/semestres") return Promise.resolve([SEMESTRE]);
+        if (path.startsWith("/api/cursos") && opts?.method === "POST")
+          return Promise.resolve(CURSO);
+        if (path.startsWith("/api/cursos")) return Promise.resolve([CURSO]);
+        return Promise.reject(new Error(`unexpected path ${path}`));
+      },
+    );
 
     render(
       <MemoryRouter>
@@ -82,13 +90,21 @@ describe("Cursos page", () => {
   });
 
   it("creates a new semestre and selects it", async () => {
-    const NUEVO_SEMESTRE = { id: "s2", nombre: "2026-2", fecha_inicio: "2026-08-01", fecha_fin: "2026-12-15" };
-    (apiFetch as ReturnType<typeof vi.fn>).mockImplementation((path: string, opts?: { method?: string }) => {
-      if (path === "/api/semestres" && opts?.method === "POST") return Promise.resolve(NUEVO_SEMESTRE);
-      if (path === "/api/semestres") return Promise.resolve([SEMESTRE]);
-      if (path.startsWith("/api/cursos")) return Promise.resolve([CURSO]);
-      return Promise.reject(new Error(`unexpected path ${path}`));
-    });
+    const NUEVO_SEMESTRE = {
+      id: "s2",
+      nombre: "2026-2",
+      fecha_inicio: "2026-08-01",
+      fecha_fin: "2026-12-15",
+    };
+    (apiFetch as ReturnType<typeof vi.fn>).mockImplementation(
+      (path: string, opts?: { method?: string }) => {
+        if (path === "/api/semestres" && opts?.method === "POST")
+          return Promise.resolve(NUEVO_SEMESTRE);
+        if (path === "/api/semestres") return Promise.resolve([SEMESTRE]);
+        if (path.startsWith("/api/cursos")) return Promise.resolve([CURSO]);
+        return Promise.reject(new Error(`unexpected path ${path}`));
+      },
+    );
 
     render(
       <MemoryRouter>
@@ -113,7 +129,12 @@ describe("Cursos page", () => {
   });
 
   it("switches the selected semestre and reloads its cursos", async () => {
-    const SEMESTRE_2 = { id: "s2", nombre: "2026-2", fecha_inicio: "2026-08-01", fecha_fin: "2026-12-15" };
+    const SEMESTRE_2 = {
+      id: "s2",
+      nombre: "2026-2",
+      fecha_inicio: "2026-08-01",
+      fecha_fin: "2026-12-15",
+    };
     const CURSO_2 = { ...CURSO, id: "c2", semestre_id: "s2", nombre: "Física I" };
     (apiFetch as ReturnType<typeof vi.fn>).mockImplementation((path: string) => {
       if (path === "/api/semestres") return Promise.resolve([SEMESTRE, SEMESTRE_2]);

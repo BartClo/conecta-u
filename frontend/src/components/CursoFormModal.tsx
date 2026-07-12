@@ -4,7 +4,12 @@ import type { Curso } from "../lib/types";
 
 interface CursoFormModalProps {
   curso?: Curso;
-  onSubmit: (data: { nombre: string; codigo: string; profesor: string | null; color: string }) => void;
+  onSubmit: (data: {
+    nombre: string;
+    codigo: string;
+    profesor: string | null;
+    color: string;
+  }) => void;
   onClose: () => void;
 }
 

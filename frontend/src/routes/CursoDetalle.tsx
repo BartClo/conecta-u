@@ -19,7 +19,12 @@ export default function CursoDetalle() {
       .catch(() => setNotFound(true));
   }, [id]);
 
-  function handleEdit(data: { nombre: string; codigo: string; profesor: string | null; color: string }) {
+  function handleEdit(data: {
+    nombre: string;
+    codigo: string;
+    profesor: string | null;
+    color: string;
+  }) {
     if (!curso) return;
     apiFetch<Curso>(`/api/cursos/${curso.id}`, {
       method: "PUT",
@@ -54,13 +59,20 @@ export default function CursoDetalle() {
         <button onClick={() => setShowEditModal(true)} className="rounded border px-3 py-1">
           Editar
         </button>
-        <button onClick={handleDelete} className="rounded border border-red-600 px-3 py-1 text-red-600">
+        <button
+          onClick={handleDelete}
+          className="rounded border border-red-600 px-3 py-1 text-red-600"
+        >
           Borrar
         </button>
       </div>
 
       {showEditModal && (
-        <CursoFormModal curso={curso} onSubmit={handleEdit} onClose={() => setShowEditModal(false)} />
+        <CursoFormModal
+          curso={curso}
+          onSubmit={handleEdit}
+          onClose={() => setShowEditModal(false)}
+        />
       )}
     </div>
   );

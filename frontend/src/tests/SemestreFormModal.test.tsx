@@ -22,7 +22,12 @@ describe("SemestreFormModal", () => {
   it("pre-fills fields when editing an existing semestre", () => {
     render(
       <SemestreFormModal
-        semestre={{ id: "s1", nombre: "2026-1", fecha_inicio: "2026-03-01", fecha_fin: "2026-07-15" }}
+        semestre={{
+          id: "s1",
+          nombre: "2026-1",
+          fecha_inicio: "2026-03-01",
+          fecha_fin: "2026-07-15",
+        }}
         onSubmit={vi.fn()}
         onClose={vi.fn()}
       />,

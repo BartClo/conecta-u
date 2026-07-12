@@ -48,7 +48,9 @@ describe("apiFetch", () => {
   });
 
   it("omits the Authorization header when there is no session", async () => {
-    (supabase.auth.getSession as ReturnType<typeof vi.fn>).mockResolvedValue({ data: { session: null } });
+    (supabase.auth.getSession as ReturnType<typeof vi.fn>).mockResolvedValue({
+      data: { session: null },
+    });
     await apiFetch("/api/x");
     const [, init] = (fetch as ReturnType<typeof vi.fn>).mock.calls[0];
     expect(init.headers.Authorization).toBeUndefined();

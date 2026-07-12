@@ -41,25 +41,32 @@ describe("CursoDetalle page", () => {
   });
 
   it("edits the curso", async () => {
-    (apiFetch as ReturnType<typeof vi.fn>).mockImplementation((path: string, opts?: { method?: string }) => {
-      if (opts?.method === "PUT") return Promise.resolve({ ...CURSO, nombre: "Cálculo II (editado)" });
-      return Promise.resolve(CURSO);
-    });
+    (apiFetch as ReturnType<typeof vi.fn>).mockImplementation(
+      (path: string, opts?: { method?: string }) => {
+        if (opts?.method === "PUT")
+          return Promise.resolve({ ...CURSO, nombre: "Cálculo II (editado)" });
+        return Promise.resolve(CURSO);
+      },
+    );
     renderPage();
 
     await screen.findByText("Cálculo II");
     fireEvent.click(screen.getByRole("button", { name: /editar/i }));
-    fireEvent.change(screen.getByLabelText(/^nombre$/i), { target: { value: "Cálculo II (editado)" } });
+    fireEvent.change(screen.getByLabelText(/^nombre$/i), {
+      target: { value: "Cálculo II (editado)" },
+    });
     fireEvent.click(screen.getByRole("button", { name: /guardar/i }));
 
     expect(await screen.findByText("Cálculo II (editado)")).toBeInTheDocument();
   });
 
   it("deletes the curso and navigates back to /cursos", async () => {
-    (apiFetch as ReturnType<typeof vi.fn>).mockImplementation((path: string, opts?: { method?: string }) => {
-      if (opts?.method === "DELETE") return Promise.resolve(undefined);
-      return Promise.resolve(CURSO);
-    });
+    (apiFetch as ReturnType<typeof vi.fn>).mockImplementation(
+      (path: string, opts?: { method?: string }) => {
+        if (opts?.method === "DELETE") return Promise.resolve(undefined);
+        return Promise.resolve(CURSO);
+      },
+    );
     vi.stubGlobal("confirm", vi.fn().mockReturnValue(true));
     renderPage();
 

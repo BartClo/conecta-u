@@ -38,14 +38,20 @@ export default function Cursos() {
     });
   }
 
-  function handleCreateCurso(data: { nombre: string; codigo: string; profesor: string | null; color: string }) {
+  function handleCreateCurso(data: {
+    nombre: string;
+    codigo: string;
+    profesor: string | null;
+    color: string;
+  }) {
     if (!semestreId) return;
-    apiFetch<Curso>("/api/cursos", { method: "POST", body: { ...data, semestre_id: semestreId } }).then(
-      (nuevo) => {
-        setShowCursoModal(false);
-        setCursos((prev) => [...prev, nuevo]);
-      },
-    );
+    apiFetch<Curso>("/api/cursos", {
+      method: "POST",
+      body: { ...data, semestre_id: semestreId },
+    }).then((nuevo) => {
+      setShowCursoModal(false);
+      setCursos((prev) => [...prev, nuevo]);
+    });
   }
 
   return (
@@ -88,7 +94,10 @@ export default function Cursos() {
       )}
 
       {showSemestreModal && (
-        <SemestreFormModal onSubmit={handleCreateSemestre} onClose={() => setShowSemestreModal(false)} />
+        <SemestreFormModal
+          onSubmit={handleCreateSemestre}
+          onClose={() => setShowSemestreModal(false)}
+        />
       )}
       {showCursoModal && (
         <CursoFormModal onSubmit={handleCreateCurso} onClose={() => setShowCursoModal(false)} />
