@@ -24,11 +24,13 @@ def _get_jwks_client() -> jwt.PyJWKClient:
 
 def _decode(token: str) -> dict:
     signing_key = _get_jwks_client().get_signing_key_from_jwt(token)
+    settings = get_settings()
     return jwt.decode(
         token,
         signing_key.key,
-        algorithms=["RS256"],
-        audience=get_settings().supabase_jwt_audience,
+        algorithms=["RS256", "ES256"],
+        audience=settings.supabase_jwt_audience,
+        issuer=settings.supabase_issuer,
     )
 
 

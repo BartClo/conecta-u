@@ -71,9 +71,10 @@ def test_decode_uses_jwks_client_signing_key(monkeypatch):
 
     captured = {}
 
-    def fake_jwt_decode(token, key, algorithms, audience):
+    def fake_jwt_decode(token, key, algorithms, audience, issuer):
         captured["key"] = key
         captured["algorithms"] = algorithms
+        captured["issuer"] = issuer
         return {"sub": "u1", "email": "a@b.com"}
 
     monkeypatch.setattr(security_module.jwt, "decode", fake_jwt_decode)
@@ -81,5 +82,17 @@ def test_decode_uses_jwks_client_signing_key(monkeypatch):
     payload = _decode("some-token")
 
     assert captured["key"] == "shared-secret"
-    assert captured["algorithms"] == ["RS256"]
+    assert captured["algorithms"] == ["RS256", "ES256"]
+    assert captured["issuer"] == "https://example.supabase.co/auth/v1"
     assert payload["sub"] == "u1"
+
+
+@pytest.mark.asyncio
+async def test_issuer_mismatch_raises_401(monkeypatch):
+    def _raise_issuer_error(token):
+        raise jwt.InvalidIssuerError()
+
+    monkeypatch.setattr("app.core.security._decode", _raise_issuer_error)
+    with pytest.raises(HTTPException) as exc:
+        await get_current_token(authorization="Bearer bad-issuer")
+    assert exc.value.status_code == 401

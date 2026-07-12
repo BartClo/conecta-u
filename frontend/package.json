@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "oxlint",
+    "lint": "eslint src",
+    "format:check": "prettier --check src",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -32,7 +33,6 @@
     "eslint": "^10.7.0",
     "eslint-config-prettier": "^10.1.8",
     "jsdom": "^29.1.1",
-    "oxlint": "^1.71.0",
     "postcss": "^8.5.17",
     "prettier": "^3.9.5",
     "tailwindcss": "^4.3.2",

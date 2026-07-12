@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { apiFetch } from "../lib/api";
 import { supabase } from "../lib/supabase";
 
@@ -11,10 +12,16 @@ const NAV_ITEMS = ["Cursos", "Calendario", "Chat IA", "Perfil"];
 
 export default function Dashboard() {
   const [me, setMe] = useState<Me | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    apiFetch<Me>("/api/me").then(setMe);
-  }, []);
+    apiFetch<Me>("/api/me")
+      .then(setMe)
+      .catch(async () => {
+        await supabase.auth.signOut();
+        navigate("/login");
+      });
+  }, [navigate]);
 
   return (
     <div className="flex h-screen">

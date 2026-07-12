@@ -7,8 +7,13 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     database_url: str
+    supabase_url: str
     supabase_jwks_url: str
     supabase_jwt_audience: str = "authenticated"
+
+    @property
+    def supabase_issuer(self) -> str:
+        return f"{self.supabase_url}/auth/v1"
 
 
 @lru_cache
