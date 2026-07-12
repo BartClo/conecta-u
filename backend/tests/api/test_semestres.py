@@ -91,7 +91,6 @@ def test_get_semestre_not_found_returns_404():
     assert response.status_code == 404
 
 
-@pytest.mark.skip(reason="depends on Task 5 cursos router")
 def test_delete_semestre_with_cursos_returns_409():
     created = client.post("/api/semestres", json=PAYLOAD).json()
     semestre_id = created["id"]
