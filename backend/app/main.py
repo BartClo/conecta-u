@@ -1,7 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.cursos import router as cursos_router
 from app.api.me import router as me_router
+from app.api.semestres import router as semestres_router
 
 app = FastAPI(title="Conecta-U API")
 app.add_middleware(
@@ -12,6 +14,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.include_router(me_router, prefix="/api")
+app.include_router(semestres_router, prefix="/api")
+app.include_router(cursos_router, prefix="/api")
 
 
 @app.get("/health")
