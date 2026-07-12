@@ -17,16 +17,16 @@ def list_semestres(db: Session, *, user_id: str) -> list[Semestre]:
 
 def get_semestre(db: Session, *, user_id: str, semestre_id: str) -> Semestre | None:
     return (
-        db.query(Semestre)
-        .filter(Semestre.id == semestre_id, Semestre.user_id == user_id)
-        .first()
+        db.query(Semestre).filter(Semestre.id == semestre_id, Semestre.user_id == user_id).first()
     )
 
 
 def create_semestre(
     db: Session, *, user_id: str, nombre: str, fecha_inicio: date, fecha_fin: date
 ) -> Semestre:
-    semestre = Semestre(user_id=user_id, nombre=nombre, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin)
+    semestre = Semestre(
+        user_id=user_id, nombre=nombre, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin
+    )
     db.add(semestre)
     db.commit()
     db.refresh(semestre)

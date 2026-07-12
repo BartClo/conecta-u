@@ -1,5 +1,6 @@
 import uuid
-from datetime import date as date_, datetime
+from datetime import date as date_
+from datetime import datetime
 
 from sqlalchemy import Date, DateTime, ForeignKey, String, func
 from sqlalchemy.orm import Mapped, mapped_column
