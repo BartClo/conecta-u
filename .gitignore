@@ -20,3 +20,7 @@ CLAUDE.md
 .claude/
 .claude-flow/
 .mcp.json
+docs/superpowers/
+
+# git worktrees (local scratch)
+.worktrees/
