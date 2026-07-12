@@ -19,7 +19,11 @@ def _fresh_db():
 
 def test_creates_user_on_first_login():
     db = next(_fresh_db())
-    token = {"sub": "u1", "email": "a@b.com", "user_metadata": {"full_name": "A B", "avatar_url": "http://x/a.png"}}
+    token = {
+        "sub": "u1",
+        "email": "a@b.com",
+        "user_metadata": {"full_name": "A B", "avatar_url": "http://x/a.png"},
+    }
 
     user = get_or_create_user(db, token)
 
