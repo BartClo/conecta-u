@@ -16,7 +16,7 @@ export default function CursoFormModal({ curso, onSubmit, onClose }: CursoFormMo
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    onSubmit({ nombre, codigo, profesor, color });
+    onSubmit({ nombre, codigo, profesor: profesor || null, color });
   }
 
   return (

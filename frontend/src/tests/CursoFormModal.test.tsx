@@ -51,7 +51,7 @@ describe("CursoFormModal", () => {
     expect(onSubmit).toHaveBeenCalledWith({
       nombre: "X",
       codigo: "X1",
-      profesor: "",
+      profesor: null,
       color: "green",
     });
   });
