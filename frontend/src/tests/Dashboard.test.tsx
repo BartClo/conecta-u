@@ -33,7 +33,10 @@ describe("Dashboard", () => {
         <Dashboard />
       </MemoryRouter>,
     );
-    expect(await screen.findByText("Cursos")).toBeInTheDocument();
+    expect(await screen.findByRole("link", { name: "Cursos" })).toHaveAttribute(
+      "href",
+      "/cursos",
+    );
     expect(screen.getByText("Calendario")).toBeInTheDocument();
     expect(screen.getByText("Chat IA")).toBeInTheDocument();
     expect(screen.getByText("Perfil")).toBeInTheDocument();
