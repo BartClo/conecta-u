@@ -8,7 +8,7 @@ interface Me {
   email: string;
 }
 
-const PROXIMAMENTE_ITEMS = ["Calendario", "Chat IA", "Perfil"];
+const PROXIMAMENTE_ITEMS = ["Chat IA", "Perfil"];
 
 export default function Dashboard() {
   const [me, setMe] = useState<Me | null>(null);
@@ -29,6 +29,9 @@ export default function Dashboard() {
         <ul className="space-y-2">
           <li>
             <Link to="/cursos">Cursos</Link>
+          </li>
+          <li>
+            <Link to="/calendario">Calendario</Link>
           </li>
           {PROXIMAMENTE_ITEMS.map((item) => (
             <li key={item} className="text-gray-400">
