@@ -252,6 +252,28 @@ describe("TestEditor", () => {
     expect(screen.getByRole("button", { name: "Crear" })).toBeEnabled();
   });
 
+  it("explains a 409 when the test is in use", async () => {
+    const onSubmit = setup({ submitLabel: "Crear" });
+    onSubmit.mockRejectedValueOnce(new Error("API request failed: 409"));
+    type("Título", "T");
+    click("Agregar pregunta");
+    await screen.findByText("Pregunta 1");
+    type("Enunciado de la pregunta 1", "q");
+    type("Opción 1 de la pregunta 1", "a");
+    type("Opción 2 de la pregunta 1", "b");
+    fireEvent.click(radio("Marcar la opción 1 de la pregunta 1 como correcta"));
+
+    click("Crear");
+
+    expect(
+      await screen.findByText(
+        "Este test ya tiene desafíos y no se puede modificar",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Título")).toHaveValue("T");
+    expect(screen.getByRole("button", { name: "Crear" })).toBeEnabled();
+  });
+
   it("falls back to a generic message for non-Error rejections", async () => {
     const onSubmit = setup();
     onSubmit.mockRejectedValueOnce("boom");

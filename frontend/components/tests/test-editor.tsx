@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { mensajeDeError } from "@/lib/api-error";
+import { mensajeDeError, TEST_EN_USO } from "@/lib/api-error";
 import { staggerContainer } from "@/lib/motion";
 import type { Test, TestPayload } from "@/lib/types";
 import { PreguntaField } from "./pregunta-field";
@@ -121,7 +121,7 @@ export function TestEditor({
         })),
       });
     } catch (err) {
-      setError(mensajeDeError(err, "No se pudo guardar."));
+      setError(mensajeDeError(err, "No se pudo guardar.", TEST_EN_USO));
       setPending(false);
     }
   }

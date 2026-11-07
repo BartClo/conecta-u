@@ -18,6 +18,9 @@ export default async function DesafioPage({
   const mio = await apiFetchServerSafe<IntentoOut>(
     `/api/desafios/${desafioId}/intentos/me`,
   );
+  if (mio.status !== 200 && mio.status !== 404) {
+    throw new Error(`API request failed: ${mio.status}`);
+  }
   if (mio.data) {
     const resultados = await apiFetchServer<ResultadoDesafioOut[]>(
       `/api/desafios/${desafioId}/resultados`,
@@ -34,6 +37,9 @@ export default async function DesafioPage({
   const rendir = await apiFetchServerSafe<TestParaRendir>(
     `/api/desafios/${desafioId}/rendir`,
   );
+  if (![200, 404, 409].includes(rendir.status)) {
+    throw new Error(`API request failed: ${rendir.status}`);
+  }
   if (rendir.data) {
     return (
       <RendirClient grupoId={id} desafioId={desafioId} test={rendir.data} />
@@ -44,7 +50,7 @@ export default async function DesafioPage({
     <div className="space-y-2">
       <h1 className="text-xl font-semibold">
         {rendir.status === 409
-          ? "Este desafío ya no acepta intentos"
+          ? "Este desafío no está disponible"
           : "Desafío no encontrado"}
       </h1>
       <Link href={`/grupos/${id}/desafios`} className="underline">

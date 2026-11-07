@@ -54,12 +54,24 @@ describe("DesafioPage state resolution", () => {
       .mockResolvedValueOnce({ status: 409, data: null });
     await pagina();
     expect(
-      screen.getByText("Este desafío ya no acepta intentos"),
+      screen.getByText("Este desafío no está disponible"),
     ).toBeInTheDocument();
     expect(screen.getByRole("link")).toHaveAttribute(
       "href",
       "/grupos/g1/desafios",
     );
+  });
+
+  it("throws on an unexpected status from intentos/me", async () => {
+    safe.mockResolvedValueOnce({ status: 500, data: null });
+    await expect(pagina()).rejects.toThrow("API request failed: 500");
+  });
+
+  it("throws on an unexpected status from rendir", async () => {
+    safe
+      .mockResolvedValueOnce({ status: 404, data: null })
+      .mockResolvedValueOnce({ status: 500, data: null });
+    await expect(pagina()).rejects.toThrow("API request failed: 500");
   });
 
   it("404 then 404 shows not found", async () => {

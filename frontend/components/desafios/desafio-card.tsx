@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { useSyncExternalStore } from "react";
 import { motion } from "framer-motion";
 import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -14,6 +15,13 @@ function fecha(iso: string): string {
 }
 
 export function DesafioCard({ desafio }: { desafio: DesafioOut }) {
+  // Timezone- and clock-dependent values are computed after mount so the
+  // server render and first client render match.
+  const cliente = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
   const href = `/grupos/${desafio.grupo_id}/desafios/${desafio.id}`;
   const abierto = desafio.estado === "abierto";
 
@@ -31,14 +39,18 @@ export function DesafioCard({ desafio }: { desafio: DesafioOut }) {
           </span>
         </div>
         <p className="text-sm text-muted-foreground">
-          {fecha(desafio.fecha_inicio)} –{" "}
-          {desafio.fecha_fin ? fecha(desafio.fecha_fin) : "sin límite"}
+          {cliente ? fecha(desafio.fecha_inicio) : "…"} –{" "}
+          {desafio.fecha_fin
+            ? cliente
+              ? fecha(desafio.fecha_fin)
+              : "…"
+            : "sin límite"}
         </p>
         {desafio.ya_rindio ? (
           <Link href={href} className={buttonVariants({ variant: "outline" })}>
             Ver resultado
           </Link>
-        ) : puedeRendirse(desafio) ? (
+        ) : cliente && puedeRendirse(desafio) ? (
           <Link href={href} className={buttonVariants()}>
             Rendir
           </Link>

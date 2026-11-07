@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mensajeDeError, statusDeError } from "../lib/api-error";
+import { mensajeDeError, statusDeError, TEST_EN_USO } from "../lib/api-error";
 
 describe("mensajeDeError", () => {
   it.each([
@@ -13,6 +13,12 @@ describe("mensajeDeError", () => {
     expect(
       mensajeDeError(new Error(`API request failed: ${status}`), "f"),
     ).toBe(texto);
+  });
+
+  it("lets callers override a status message", () => {
+    expect(
+      mensajeDeError(new Error("API request failed: 409"), "f", TEST_EN_USO),
+    ).toBe("Este test ya tiene desafíos y no se puede modificar");
   });
 
   it("keeps app-originated Error messages and falls back otherwise", () => {

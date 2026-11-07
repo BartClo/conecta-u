@@ -39,13 +39,15 @@ export function RendirClient({ grupoId, desafioId, test }: RendirClientProps) {
   const [cerrado, setCerrado] = useState(false);
   const [final, setFinal] = useState<Final | null>(null);
 
+  const terminado = final !== null || cerrado;
   useEffect(() => {
+    if (terminado) return;
     const id = setInterval(
       () => setElapsed(Math.floor((Date.now() - startedAt) / 1000)),
       1000,
     );
     return () => clearInterval(id);
-  }, [startedAt]);
+  }, [startedAt, terminado]);
 
   if (final) {
     return (
@@ -115,8 +117,9 @@ export function RendirClient({ grupoId, desafioId, test }: RendirClientProps) {
           );
           const resultados = await cargarResultados().catch(() => []);
           setFinal({ intento, resultados, recienRendido: false });
-        } catch {
-          setCerrado(true);
+        } catch (err2) {
+          if (statusDeError(err2) === 404) setCerrado(true);
+          else setError(mensajeDeError(err2, "No se pudo enviar el intento."));
         }
       } else {
         setError(mensajeDeError(err, "No se pudo enviar el intento."));

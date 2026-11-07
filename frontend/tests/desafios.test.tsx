@@ -5,6 +5,7 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
+import { renderToString } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DesafiosClient } from "../app/(app)/grupos/[id]/desafios/desafios-client";
 import { RendirClient } from "../app/(app)/grupos/[id]/desafios/[desafioId]/rendir-client";
@@ -131,6 +132,13 @@ describe("DesafioCard", () => {
       "href",
       "/grupos/g1/desafios/d1",
     );
+  });
+
+  it("renders stable placeholders before mount and no Rendir link", () => {
+    const html = renderToString(<DesafioCard desafio={ABIERTO} />);
+    expect(html).toContain("…");
+    expect(html).not.toContain("Rendir");
+    expect(html).toContain("Cerrado");
   });
 
   it("shows the end date when there is one", () => {
@@ -475,6 +483,29 @@ describe("RendirClient", () => {
     expect(
       screen.getByRole("link", { name: "Volver a desafíos" }),
     ).toHaveAttribute("href", "/grupos/g1/desafios");
+  });
+
+  it("on 409 with a non-404 failure on intentos/me shows a retryable error", async () => {
+    api
+      .mockRejectedValueOnce(new Error("API request failed: 409"))
+      .mockRejectedValueOnce(new Error("API request failed: 500"));
+    setup();
+    await responderTodo();
+    fireEvent.click(screen.getByRole("button", { name: "Finalizar" }));
+
+    expect(await screen.findByText(/Error del servidor/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Reintentar" })).toBeEnabled();
+  });
+
+  it("stops the timer once there is a final result", async () => {
+    const clear = vi.spyOn(globalThis, "clearInterval");
+    api.mockResolvedValueOnce(INTENTO).mockResolvedValueOnce(RESULTADOS);
+    setup();
+    await responderTodo();
+    fireEvent.click(screen.getByRole("button", { name: "Finalizar" }));
+    await screen.findByText("Tu puntaje: 1 / 2");
+    expect(clear).toHaveBeenCalled();
+    clear.mockRestore();
   });
 
   it("on a generic error shows the message and Reintentar repeats the same POST", async () => {

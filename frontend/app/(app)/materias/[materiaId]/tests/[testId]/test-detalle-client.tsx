@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { apiFetchClient } from "@/lib/api-client";
-import { mensajeDeError } from "@/lib/api-error";
+import { mensajeDeError, TEST_EN_USO } from "@/lib/api-error";
 import type { Test } from "@/lib/types";
 
 interface TestDetalleClientProps {
@@ -27,7 +27,7 @@ export function TestDetalleClient({ test, userId }: TestDetalleClientProps) {
       await apiFetchClient(`/api/tests/${test.id}`, { method: "DELETE" });
       router.push(base);
     } catch (err) {
-      setError(mensajeDeError(err, "Algo salió mal."));
+      setError(mensajeDeError(err, "Algo salió mal.", TEST_EN_USO));
     }
   }
 

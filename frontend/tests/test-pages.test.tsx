@@ -146,6 +146,20 @@ describe("TestDetalleClient", () => {
     expect(push).not.toHaveBeenCalled();
   });
 
+  it("explains a 409 when the test is in use", async () => {
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    api.mockRejectedValueOnce(new Error("API request failed: 409"));
+    render(<TestDetalleClient test={TEST} userId="u1" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Borrar" }));
+
+    expect(
+      await screen.findByText(
+        "Este test ya tiene desafíos y no se puede modificar",
+      ),
+    ).toBeInTheDocument();
+  });
+
   it("falls back to a generic message for non-Error failures", async () => {
     vi.spyOn(window, "confirm").mockReturnValue(true);
     api.mockRejectedValueOnce("boom");
