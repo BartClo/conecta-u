@@ -50,10 +50,10 @@ function renderClient(
   items: MovimientoCreditoOut[],
   total = items.length,
   saldo = 100,
-) {
-  const client = new QueryClient({
+  client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
-  });
+  }),
+) {
   return render(
     <QueryClientProvider client={client}>
       <CreditosClient
@@ -173,6 +173,33 @@ describe("CreditosClient", () => {
     await waitFor(() =>
       expect(screen.getByRole("button", { name: /cargar más/i })).toBeEnabled(),
     );
+  });
+});
+
+describe("CreditosClient cache y duplicados", () => {
+  it("el saldo del servidor gana sobre una caché vieja", () => {
+    const qc = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    qc.setQueryData(["creditos", "saldo"], { saldo: 1 });
+    renderClient([mov("a", 15, "gano_desafio", 115)], 1, 100, qc);
+    expect(qc.getQueryData(["creditos", "saldo"])).toEqual({ saldo: 100 });
+  });
+
+  it("no duplica movimientos ya cargados al cargar más", async () => {
+    renderClient([mov("a", 15, "gano_desafio", 115)], 2);
+    (apiFetchClient as ReturnType<typeof vi.fn>).mockResolvedValue({
+      items: [
+        mov("a", 15, "gano_desafio", 115),
+        mov("b", -20, "genero_resumen_ia", 95),
+      ],
+      limit: 20,
+      offset: 20,
+      total: 2,
+    });
+    fireEvent.click(screen.getByRole("button", { name: /cargar más/i }));
+    await screen.findByText("Generaste un resumen con IA");
+    expect(screen.getAllByText("Ganaste un desafío")).toHaveLength(1);
   });
 });
 

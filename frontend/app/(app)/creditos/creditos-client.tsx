@@ -2,7 +2,7 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SaldoContador } from "@/components/creditos/saldo-contador";
 import { Button } from "@/components/ui/button";
 import { apiFetchClient } from "@/lib/api-client";
@@ -26,6 +26,10 @@ export function CreditosClient({
   const queryClient = useQueryClient();
   // initialData guarantees data is defined
   const saldo = useSaldo(initialSaldo).data as SaldoCreditoOut;
+  // el saldo del servidor gana sobre una caché vieja
+  useEffect(() => {
+    queryClient.setQueryData(["creditos", "saldo"], initialSaldo);
+  }, [queryClient, initialSaldo]);
   const [items, setItems] = useState(initialMovimientos.items);
   const [offset, setOffset] = useState(0);
   const [total, setTotal] = useState(initialMovimientos.total);
@@ -44,7 +48,10 @@ export function CreditosClient({
             `/api/creditos/movimientos?limit=${LIMIT}&offset=${next}`,
           ),
       });
-      setItems((prev) => [...prev, ...page.items]);
+      setItems((prev) => {
+        const ids = new Set(prev.map((m) => m.id));
+        return [...prev, ...page.items.filter((m) => !ids.has(m.id))];
+      });
       setTotal(page.total);
       setOffset(next);
     } catch (err) {
