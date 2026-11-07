@@ -1,6 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy.exc import DataError, IntegrityError, StatementError
+from psycopg2.extensions import QuotedString
+from sqlalchemy.exc import DataError, IntegrityError
 
 from app.main import app, create_app
 
@@ -22,21 +23,30 @@ def _cliente_que_lanza(exc: Exception) -> TestClient:
     return TestClient(nueva, raise_server_exceptions=False)
 
 
-@pytest.mark.parametrize(
-    "exc",
-    [
-        DataError("INSERT secreto", {}, Exception("value too long")),
-        StatementError("nul", "INSERT secreto", {}, ValueError("cannot contain NUL")),
-    ],
-    ids=["texto-largo", "nul"],
-)
-def test_datos_rechazados_por_la_db_dan_422_sin_filtrar_sql(exc):
+def _error_real_de_psycopg2_con_nul() -> ValueError:
+    with pytest.raises(ValueError) as exc:
+        QuotedString("a\x00b").getquoted()
+    return exc.value
+
+
+def test_texto_con_nul_da_422():
+    r = _cliente_que_lanza(_error_real_de_psycopg2_con_nul()).get("/boom")
+    assert r.status_code == 422
+
+
+def test_texto_largo_da_422_sin_filtrar_sql():
+    exc = DataError("INSERT secreto", {}, Exception("value too long"))
     r = _cliente_que_lanza(exc).get("/boom")
     assert r.status_code == 422
     assert "secreto" not in r.text
 
 
-def test_otros_errores_de_sql_siguen_siendo_500():
-    r = _cliente_que_lanza(IntegrityError("INSERT secreto", {}, Exception("x"))).get("/boom")
+@pytest.mark.parametrize(
+    "exc",
+    [IntegrityError("INSERT secreto", {}, Exception("x")), ValueError("secreto")],
+    ids=["integridad", "otro-valueerror"],
+)
+def test_otros_errores_siguen_siendo_500(exc):
+    r = _cliente_que_lanza(exc).get("/boom")
     assert r.status_code == 500
     assert "secreto" not in r.text

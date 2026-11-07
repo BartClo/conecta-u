@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from sqlalchemy.exc import DataError, StatementError
+from sqlalchemy.exc import DataError
 
 from app.api.creditos import router as creditos_router
 from app.api.cursos import router as cursos_router
@@ -16,10 +16,10 @@ from app.api.tests import router as tests_router
 from app.core.config import Settings, get_settings
 
 
-def _datos_rechazados_por_la_db(request: Request, exc: StatementError) -> JSONResponse:
-    # Texto mas largo que la columna (DataError) o con NUL (psycopg2 lanza ValueError):
-    # es un error del cliente en cualquier endpoint. El resto sigue siendo un 500.
-    if isinstance(exc, DataError) or isinstance(exc.orig, ValueError):
+def _dato_rechazado_por_la_db(request: Request, exc: Exception) -> JSONResponse:
+    # Texto mas largo que la columna (DataError) o con NUL: error del cliente en cualquier
+    # endpoint. psycopg2 lanza ValueError sin envolver ante NUL; otro ValueError es un 500.
+    if isinstance(exc, DataError) or "cannot contain NUL" in str(exc):
         return JSONResponse(status_code=422, content={"detail": "Datos no válidos"})
     raise exc
 
@@ -34,7 +34,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    app.add_exception_handler(StatementError, _datos_rechazados_por_la_db)
+    app.add_exception_handler(DataError, _dato_rechazado_por_la_db)
+    app.add_exception_handler(ValueError, _dato_rechazado_por_la_db)
     for router in (
         me_router,
         semestres_router,
