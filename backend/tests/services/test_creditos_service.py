@@ -202,3 +202,37 @@ def test_check_constraint_rechaza_saldo_negativo(db):
         db.execute(text("UPDATE cuentas_credito SET saldo = -1 WHERE id = :i"), {"i": cuenta.id})
     db.rollback()
     assert isinstance(db.get(CuentaCredito, cuenta.id).saldo, int)
+
+
+def _otro_usuario(db):
+    db.add(User(id="u2", email="u2@x.com", name="U2"))
+    db.commit()
+
+
+def test_ref_de_otro_usuario_lanza_error(db):
+    _otro_usuario(db)
+    svc.ganar(db, "u1", 15, "gano_desafio", "desafio", "d1")
+    with pytest.raises(svc.ReferenciaDeOtroUsuarioError):
+        svc.ganar(db, "u2", 15, "gano_desafio", "desafio", "d1")
+
+
+def test_ref_de_otro_usuario_tras_integrity_error_lanza_error(db, monkeypatch):
+    _otro_usuario(db)
+    svc.ganar(db, "u1", 15, "gano_desafio", "desafio", "d1")
+    db.commit()
+    original = svc._existente
+    llamadas = []
+
+    def ciego_la_primera_vez(*a, **kw):
+        llamadas.append(1)
+        return None if len(llamadas) == 1 else original(*a, **kw)
+
+    monkeypatch.setattr(svc, "_existente", ciego_la_primera_vez)
+    with pytest.raises(svc.ReferenciaDeOtroUsuarioError):
+        svc.ganar(db, "u2", 15, "gano_desafio", "desafio", "d1")
+
+
+def test_bono_y_gasto_de_una_transaccion_tienen_created_at_distinto(db):
+    svc.gastar(db, "u1", 5, "genero_test_ia")
+    movs = {m.motivo: m.created_at for m in db.scalars(select(MovimientoCredito))}
+    assert movs["genero_test_ia"] > movs["bono_inicial"]

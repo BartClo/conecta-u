@@ -149,3 +149,11 @@ def test_scoping_por_token():
     movs = client.get("/api/creditos/movimientos").json()
     assert movs["total"] == 1
     assert movs["items"][0]["motivo"] == "bono_inicial"
+
+
+def test_movimientos_bono_y_gasto_de_una_transaccion_gasto_primero():
+    with TestSession() as db:
+        svc.gastar(db, "ana", 5, "genero_test_ia")
+        db.commit()
+    items = client.get("/api/creditos/movimientos").json()["items"]
+    assert [m["motivo"] for m in items] == ["genero_test_ia", "bono_inicial"]

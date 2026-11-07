@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 
 from sqlalchemy import (
     CheckConstraint,
@@ -55,7 +55,13 @@ class MovimientoCredito(Base):
     ref_tipo: Mapped[str | None] = mapped_column(String(30), nullable=True)
     ref_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     saldo_resultante: Mapped[int] = mapped_column(Integer, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    # default en Python: now() de Postgres es el inicio de la transacción y
+    # empataría bono y gasto de una misma transacción.
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        server_default=func.now(),
+    )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )

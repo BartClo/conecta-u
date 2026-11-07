@@ -13,6 +13,10 @@ class SaldoInsuficienteError(Exception):
     pass
 
 
+class ReferenciaDeOtroUsuarioError(Exception):
+    """La (ref_tipo, ref_id, motivo) ya fue usada por otro usuario."""
+
+
 def obtener_o_crear_cuenta(db: Session, user_id: str) -> CuentaCredito:
     cuenta = repo.get_cuenta(db, user_id)
     if cuenta:
@@ -50,6 +54,12 @@ def _existente(
     return repo.get_por_ref(db, ref_tipo, ref_id, motivo)
 
 
+def _previo_propio(previo: MovimientoCredito, user_id: str) -> MovimientoCredito:
+    if previo.user_id != user_id:
+        raise ReferenciaDeOtroUsuarioError()
+    return previo
+
+
 def _aplicar(
     db: Session,
     user_id: str,
@@ -64,7 +74,7 @@ def _aplicar(
     cuenta = repo.get_cuenta(db, user_id, lock=True)  # FOR UPDATE: serializa por usuario
     previo = _existente(db, motivo, ref_tipo, ref_id)
     if previo:
-        return previo
+        return _previo_propio(previo, user_id)
     if cuenta.saldo + delta < 0:
         raise SaldoInsuficienteError()
     try:
@@ -85,7 +95,7 @@ def _aplicar(
         previo = _existente(db, motivo, ref_tipo, ref_id)
         if previo is None:
             raise
-        return previo
+        return _previo_propio(previo, user_id)
     return mov
 
 
