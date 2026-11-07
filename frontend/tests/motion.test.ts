@@ -11,13 +11,9 @@ function mockMatchMedia(initialMatches: boolean) {
     },
     removeEventListener: vi.fn(),
   };
-  vi.stubGlobal(
-    "matchMedia",
-    vi.fn().mockReturnValue(mql),
-  );
+  vi.stubGlobal("matchMedia", vi.fn().mockReturnValue(mql));
   return {
-    fire: (matches: boolean) =>
-      listener?.({ matches } as MediaQueryListEvent),
+    fire: (matches: boolean) => listener?.({ matches } as MediaQueryListEvent),
   };
 }
 

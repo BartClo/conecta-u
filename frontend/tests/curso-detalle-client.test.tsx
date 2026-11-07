@@ -45,9 +45,7 @@ describe("CursoDetalleClient", () => {
   it("edits the curso and shows the updated data", async () => {
     const ACTUALIZADO = { ...CURSO, nombre: "Cálculo III" };
     (apiFetchClient as ReturnType<typeof vi.fn>).mockReset();
-    (apiFetchClient as ReturnType<typeof vi.fn>).mockResolvedValue(
-      ACTUALIZADO,
-    );
+    (apiFetchClient as ReturnType<typeof vi.fn>).mockResolvedValue(ACTUALIZADO);
 
     render(<CursoDetalleClient curso={CURSO} />);
     fireEvent.click(screen.getByRole("button", { name: /editar/i }));

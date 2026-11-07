@@ -255,9 +255,9 @@ describe("CalendarioClient", () => {
       .calls.length;
     fireEvent.click(screen.getByRole("button", { name: /borrar evento/i }));
 
-    expect(
-      (apiFetchClient as ReturnType<typeof vi.fn>).mock.calls.length,
-    ).toBe(llamadasAntes);
+    expect((apiFetchClient as ReturnType<typeof vi.fn>).mock.calls.length).toBe(
+      llamadasAntes,
+    );
     expect(screen.getByText("Editar evento")).toBeInTheDocument();
   });
 });

@@ -103,9 +103,7 @@ describe("CursosClient", () => {
         expect.objectContaining({ method: "POST" }),
       ),
     );
-    expect(
-      screen.getByRole("option", { name: "2026-2" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "2026-2" })).toBeInTheDocument();
   });
 
   it("reloads cursos when a different semestre is selected", async () => {
@@ -129,9 +127,7 @@ describe("CursosClient", () => {
     });
 
     await waitFor(() =>
-      expect(apiFetchClient).toHaveBeenCalledWith(
-        "/api/cursos?semestre_id=s2",
-      ),
+      expect(apiFetchClient).toHaveBeenCalledWith("/api/cursos?semestre_id=s2"),
     );
     await waitFor(() =>
       expect(screen.getByText("Álgebra")).toBeInTheDocument(),

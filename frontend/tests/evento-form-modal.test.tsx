@@ -156,11 +156,7 @@ describe("EventoFormModal", () => {
   it("llama a onClose al cancelar", () => {
     const onClose = vi.fn();
     render(
-      <EventoFormModal
-        cursos={CURSOS}
-        onSubmit={vi.fn()}
-        onClose={onClose}
-      />,
+      <EventoFormModal cursos={CURSOS} onSubmit={vi.fn()} onClose={onClose} />,
     );
 
     fireEvent.click(screen.getByRole("button", { name: /cancelar/i }));
