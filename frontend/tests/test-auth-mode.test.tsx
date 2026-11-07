@@ -153,14 +153,12 @@ describe("TestLoginForm", () => {
   }
 
   it("guarda el token y entra al dashboard", async () => {
-    const assign = vi.fn();
-    vi.stubGlobal("location", { assign });
     (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ access_token: "nuevo" }),
     });
     enviar();
-    await waitFor(() => expect(assign).toHaveBeenCalledWith("/dashboard"));
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/dashboard"));
     expect(readTestToken()).toBe("nuevo");
     expect(fetch).toHaveBeenCalledWith(
       "http://api/api/test/login",

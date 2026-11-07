@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +9,7 @@ import { setTestSession } from "@/lib/auth/test-session";
 
 // Solo se importa en builds con NEXT_PUBLIC_AUTH_MODE=test (ver la pagina de login).
 export function TestLoginForm() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -30,7 +32,7 @@ export function TestLoginForm() {
       access_token: string;
     };
     setTestSession(access_token);
-    window.location.assign("/dashboard");
+    router.push("/dashboard");
   }
 
   return (
