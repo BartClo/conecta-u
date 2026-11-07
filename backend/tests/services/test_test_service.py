@@ -125,3 +125,23 @@ def test_actualizar_reemplaza_y_valida_autor(db):
         svc.borrar(db, user_id="otro", test_id=test.id)
     with pytest.raises(svc.TestNoEncontrado):
         svc.get_test(db, "nope")
+
+
+def test_actualizar_solo_preguntas_refresca_updated_at(db):
+    from datetime import datetime
+
+    test = svc.crear_test(db, **_args())
+    test.updated_at = datetime(2000, 1, 1)
+    db.commit()
+
+    nuevo = svc.actualizar(
+        db,
+        user_id="u1",
+        test_id=test.id,
+        materia_id="m1",
+        titulo="T",
+        descripcion=None,
+        preguntas=[_preg("solo cambian las preguntas")],
+    )
+
+    assert nuevo.updated_at.year > 2000

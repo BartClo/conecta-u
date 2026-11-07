@@ -33,6 +33,7 @@ def upgrade() -> None:
         sa.Column("origen", sa.String(10), nullable=False),
         *_timestamps(),
     )
+    op.create_index("ix_tests_materia_id", "tests", ["materia_id"])
     op.create_table(
         "preguntas",
         sa.Column("id", sa.String(36), primary_key=True),
@@ -43,6 +44,7 @@ def upgrade() -> None:
         sa.Column("orden", sa.Integer(), nullable=False),
         *_timestamps(),
     )
+    op.create_index("ix_preguntas_test_id", "preguntas", ["test_id"])
     op.create_table(
         "opciones",
         sa.Column("id", sa.String(36), primary_key=True),
@@ -57,6 +59,7 @@ def upgrade() -> None:
         sa.Column("orden", sa.Integer(), nullable=False),
         *_timestamps(),
     )
+    op.create_index("ix_opciones_pregunta_id", "opciones", ["pregunta_id"])
 
 
 def downgrade() -> None:

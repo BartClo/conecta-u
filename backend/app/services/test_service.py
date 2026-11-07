@@ -1,3 +1,4 @@
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.core.origenes_test import ORIGEN_MANUAL, ORIGENES
@@ -155,6 +156,7 @@ def actualizar(
     test.titulo = titulo
     test.descripcion = _descripcion(descripcion)
     test.preguntas = repo.build_preguntas(preguntas)  # reemplazo completo (delete-orphan)
+    test.updated_at = func.now()  # onupdate no dispara si solo cambian las preguntas
     db.commit()
     db.refresh(test)
     return test
