@@ -4,8 +4,8 @@
 set -euo pipefail
 export MSYS_NO_PATHCONV=1
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-compose() { docker compose -f "$ROOT/docker-compose.e2e.yml" --profile qa "$@"; }
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
+compose() { docker compose -f docker-compose.e2e.yml --profile qa "$@"; }
 
 cleanup() {
   status=$?
@@ -18,7 +18,9 @@ trap cleanup EXIT
 compose down -v --remove-orphans
 compose up -d --build --wait --wait-timeout 300
 
-cd "$ROOT/frontend"
-[ -d node_modules ] || npm ci --legacy-peer-deps
-npx playwright install chromium
-npx playwright test "$@"
+(
+  cd frontend
+  [ -d node_modules ] || npm ci --legacy-peer-deps
+  npx playwright install chromium
+  npx playwright test "$@"
+)
