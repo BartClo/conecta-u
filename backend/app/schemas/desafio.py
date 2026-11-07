@@ -63,6 +63,48 @@ class IntentoOut(BaseModel):
     finalizado_at: FechaUtc
 
 
+class DesafioDetalleOut(BaseModel):
+    id: str
+    grupo_id: str
+    test_titulo: str
+    creado_por: str
+    owner_id: str
+    estado: str
+    fecha_inicio: FechaUtc
+    fecha_fin: FechaUtc | None
+    ganador_user_id: str | None
+    ganador_nombre: str | None
+    premio_acreditado: bool
+    premio_creditos: int
+
+
+class DesafioCerrado(BaseModel):
+    id: str
+    estado: str
+    ganador_user_id: str | None
+    ganador_nombre: str | None
+    premio_acreditado: bool
+    premio_creditos: int
+
+
+class RankingDesafioEntry(BaseModel):
+    user_id: str
+    nombre: str
+    puntaje: int
+    total: int
+    segundos: int
+    posicion: int
+    elegible: bool
+
+
+class LeaderboardEntry(BaseModel):
+    user_id: str
+    nombre: str
+    desafios_ganados: int
+    suma_puntajes: int
+    posicion: int
+
+
 class ResultadoDesafioOut(BaseModel):
     user_id: str
     user_nombre: str

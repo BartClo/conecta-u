@@ -8,10 +8,14 @@ from app.core.database import get_db
 from app.core.security import TokenPayload, get_current_token
 from app.models.desafio import Desafio
 from app.schemas.desafio import (
+    DesafioCerrado,
+    DesafioDetalleOut,
     DesafioIn,
     DesafioOut,
     IntentoIn,
     IntentoOut,
+    LeaderboardEntry,
+    RankingDesafioEntry,
     RendirOut,
     ResultadoDesafioOut,
 )
@@ -26,6 +30,12 @@ def _http_errors() -> Iterator[None]:
         yield
     except (svc.GrupoNoEncontrado, svc.DesafioNoEncontrado) as exc:
         raise HTTPException(status_code=404, detail="Desafío no encontrado") from exc
+    except svc.NoPuedeCerrar as exc:
+        raise HTTPException(
+            status_code=403, detail="No puedes cerrar este desafío todavía"
+        ) from exc
+    except svc.MateriaNoEncontrada as exc:
+        raise HTTPException(status_code=404, detail="Materia no encontrada") from exc
     except svc.IntentoNoEncontrado as exc:
         raise HTTPException(status_code=404, detail="Aún no has rendido este desafío") from exc
     except svc.TestNoEncontrado as exc:
@@ -124,6 +134,106 @@ def mi_intento(
     with _http_errors():
         intento = svc.mi_intento(db, user_id=token["sub"], desafio_id=desafio_id)
     return IntentoOut.model_validate(intento, from_attributes=True)
+
+
+@router.get("/desafios/{desafio_id}", response_model=DesafioDetalleOut)
+def get_desafio(
+    desafio_id: str,
+    token: TokenPayload = Depends(get_current_token),
+    db: Session = Depends(get_db),
+) -> DesafioDetalleOut:
+    with _http_errors():
+        d, titulo, owner_id, ganador = svc.detalle(db, user_id=token["sub"], desafio_id=desafio_id)
+    return DesafioDetalleOut(
+        id=d.id,
+        grupo_id=d.grupo_id,
+        test_titulo=titulo,
+        creado_por=d.creado_por,
+        owner_id=owner_id,
+        estado=d.estado,
+        fecha_inicio=d.fecha_inicio,
+        fecha_fin=d.fecha_fin,
+        ganador_user_id=d.ganador_user_id,
+        ganador_nombre=ganador,
+        premio_acreditado=d.premio_acreditado,
+        premio_creditos=svc.premio_creditos(d),
+    )
+
+
+@router.post("/desafios/{desafio_id}/cerrar", response_model=DesafioCerrado)
+def cerrar_desafio(
+    desafio_id: str,
+    token: TokenPayload = Depends(get_current_token),
+    db: Session = Depends(get_db),
+) -> DesafioCerrado:
+    with _http_errors():
+        d, ganador = svc.cerrar(db, user_id=token["sub"], desafio_id=desafio_id)
+    return DesafioCerrado(
+        id=d.id,
+        estado=d.estado,
+        ganador_user_id=d.ganador_user_id,
+        ganador_nombre=ganador,
+        premio_acreditado=d.premio_acreditado,
+        premio_creditos=svc.premio_creditos(d),
+    )
+
+
+@router.get("/desafios/{desafio_id}/ranking", response_model=list[RankingDesafioEntry])
+def ranking_desafio(
+    desafio_id: str,
+    token: TokenPayload = Depends(get_current_token),
+    db: Session = Depends(get_db),
+) -> list[RankingDesafioEntry]:
+    with _http_errors():
+        filas = svc.ranking(db, user_id=token["sub"], desafio_id=desafio_id)
+    return [
+        RankingDesafioEntry(
+            user_id=u.id,
+            nombre=u.name or u.email,
+            puntaje=i.puntaje,
+            total=i.total,
+            segundos=i.segundos,
+            posicion=pos,
+            elegible=elegible,
+        )
+        for pos, (i, u, elegible) in enumerate(filas, start=1)
+    ]
+
+
+def _leaderboard_out(filas, *, publico: bool) -> list[LeaderboardEntry]:
+    # En el ranking de materia (publico) no se expone el email.
+    return [
+        LeaderboardEntry(
+            user_id=u.id,
+            nombre=u.name or ("Estudiante" if publico else u.email),
+            desafios_ganados=ganados,
+            suma_puntajes=suma,
+            posicion=pos,
+        )
+        for pos, (u, ganados, suma) in enumerate(filas, start=1)
+    ]
+
+
+@router.get("/grupos/{grupo_id}/leaderboard", response_model=list[LeaderboardEntry])
+def leaderboard_grupo(
+    grupo_id: str,
+    token: TokenPayload = Depends(get_current_token),
+    db: Session = Depends(get_db),
+) -> list[LeaderboardEntry]:
+    with _http_errors():
+        filas = svc.leaderboard(db, user_id=token["sub"], grupo_id=grupo_id)
+    return _leaderboard_out(filas, publico=False)
+
+
+@router.get("/materias/{materia_id}/ranking", response_model=list[LeaderboardEntry])
+def ranking_materia(
+    materia_id: str,
+    token: TokenPayload = Depends(get_current_token),
+    db: Session = Depends(get_db),
+) -> list[LeaderboardEntry]:
+    with _http_errors():
+        filas = svc.ranking_materia(db, materia_id)
+    return _leaderboard_out(filas, publico=True)
 
 
 @router.get("/desafios/{desafio_id}/resultados", response_model=list[ResultadoDesafioOut])

@@ -3,14 +3,23 @@ from datetime import UTC, datetime
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.core.estados_desafio import ESTADO_ABIERTO
+from app.core import economia
+from app.core.estados_desafio import ESTADO_ABIERTO, ESTADO_CERRADO
 from app.core.fechas import aware_utc
 from app.models.desafio import Desafio, Intento, RespuestaIntento
 from app.models.test import Test
 from app.models.user import User
 from app.repositories import desafio_repository as repo
-from app.repositories import grupo_repository
-from app.services import grupo_service
+from app.repositories import grupo_repository, materia_repository
+from app.services import creditos_service, grupo_service
+
+
+class NoPuedeCerrar(Exception):
+    pass
+
+
+class MateriaNoEncontrada(Exception):
+    pass
 
 
 class GrupoNoEncontrado(Exception):
@@ -170,3 +179,74 @@ def mi_intento(db: Session, *, user_id: str, desafio_id: str) -> Intento:
 def resultados(db: Session, *, user_id: str, desafio_id: str) -> list[tuple[Intento, User]]:
     _desafio_de_miembro(db, desafio_id, user_id)
     return repo.list_resultados(db, desafio_id)
+
+
+def premio_creditos(desafio: Desafio) -> int:
+    return economia.PREMIO_DESAFIO if desafio.premio_acreditado else 0
+
+
+def nombre_ganador(db: Session, desafio: Desafio) -> str | None:
+    if desafio.ganador_user_id is None:
+        return None
+    ganador = db.get(User, desafio.ganador_user_id)
+    return ganador.name or ganador.email
+
+
+def detalle(db: Session, *, user_id: str, desafio_id: str) -> tuple[Desafio, str, str, str | None]:
+    """(desafio, titulo del test, owner_id del grupo, nombre del ganador)."""
+    desafio = _desafio_de_miembro(db, desafio_id, user_id)
+    titulo = repo.get_test(db, desafio.test_id).titulo
+    owner_id = repo.get_grupo(db, desafio.grupo_id).owner_id
+    return desafio, titulo, owner_id, nombre_ganador(db, desafio)
+
+
+def ranking(db: Session, *, user_id: str, desafio_id: str) -> list[tuple[Intento, User, bool]]:
+    desafio = _desafio_de_miembro(db, desafio_id, user_id)
+    autor_id = repo.get_test(db, desafio.test_id).autor_id
+    return repo.list_ranking(
+        db, desafio_id=desafio.id, grupo_id=desafio.grupo_id, autor_id=autor_id
+    )
+
+
+def cerrar(db: Session, *, user_id: str, desafio_id: str) -> tuple[Desafio, str | None]:
+    desafio = _desafio_de_miembro(db, desafio_id, user_id)
+    vencido = desafio.fecha_fin is not None and datetime.now(UTC) > aware_utc(desafio.fecha_fin)
+    responsable = user_id == desafio.creado_por or (
+        repo.get_grupo(db, desafio.grupo_id).owner_id == user_id
+    )
+    if not (vencido or responsable):
+        raise NoPuedeCerrar()
+    # Fila bloqueada y releida: un cierre concurrente espera y luego ve el estado final.
+    desafio = repo.get_for_update(db, desafio_id)
+    if desafio.estado != ESTADO_CERRADO:
+        autor_id = repo.get_test(db, desafio.test_id).autor_id
+        filas = repo.list_ranking(
+            db, desafio_id=desafio.id, grupo_id=desafio.grupo_id, autor_id=autor_id
+        )
+        ganador = next((i for i, _, elegible in filas if elegible), None)
+        desafio.estado = ESTADO_CERRADO
+        if ganador is not None:
+            desafio.ganador_user_id = ganador.user_id
+            creditos_service.ganar(
+                db,
+                user_id=ganador.user_id,
+                monto=economia.PREMIO_DESAFIO,
+                motivo=economia.MOTIVO_GANO_DESAFIO,
+                ref_tipo="desafio",
+                ref_id=desafio.id,
+            )
+            desafio.premio_acreditado = True
+    db.commit()  # cierre + premio + flag en una sola transaccion
+    db.refresh(desafio)
+    return desafio, nombre_ganador(db, desafio)
+
+
+def leaderboard(db: Session, *, user_id: str, grupo_id: str) -> list[tuple[User, int, int]]:
+    _exigir_miembro(db, grupo_id, user_id)
+    return repo.leaderboard_grupo(db, grupo_id)
+
+
+def ranking_materia(db: Session, materia_id: str) -> list[tuple[User, int, int]]:
+    if materia_repository.get(db, materia_id) is None:
+        raise MateriaNoEncontrada()
+    return repo.ranking_materia(db, materia_id)
