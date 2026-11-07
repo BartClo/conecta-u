@@ -68,3 +68,42 @@ export interface Ocurrencia {
   fecha_fin: string | null;
   curso_id: string | null;
 }
+
+export interface Opcion {
+  id: string;
+  texto: string;
+  orden: number;
+  // Only present when the caller is the test's author.
+  es_correcta?: boolean;
+}
+
+export interface Pregunta {
+  id: string;
+  enunciado: string;
+  orden: number;
+  opciones: Opcion[];
+}
+
+export type OrigenTest = "manual" | "ia";
+
+export interface Test {
+  id: string;
+  materia_id: string;
+  titulo: string;
+  descripcion: string | null;
+  autor_id: string;
+  origen: OrigenTest;
+  created_at: string;
+  preguntas: Pregunta[];
+}
+
+// Body of POST/PUT /api/tests (built by TestEditor).
+export interface TestPayload {
+  materia_id: string;
+  titulo: string;
+  descripcion: string | null;
+  preguntas: {
+    enunciado: string;
+    opciones: { texto: string; es_correcta: boolean }[];
+  }[];
+}
