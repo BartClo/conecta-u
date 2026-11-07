@@ -1,0 +1,72 @@
+import { render, screen } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import DesafioPage from "../app/(app)/grupos/[id]/desafios/[desafioId]/page";
+import { apiFetchServer, apiFetchServerSafe } from "../lib/api-server";
+
+vi.mock("../lib/api-server", () => ({
+  apiFetchServer: vi.fn(),
+  apiFetchServerSafe: vi.fn(),
+}));
+vi.mock(
+  "../app/(app)/grupos/[id]/desafios/[desafioId]/resultado-client",
+  () => ({
+    ResultadoClient: () => <div>RESULTADO</div>,
+  }),
+);
+vi.mock("../app/(app)/grupos/[id]/desafios/[desafioId]/rendir-client", () => ({
+  RendirClient: () => <div>RENDIR</div>,
+}));
+const safe = apiFetchServerSafe as ReturnType<typeof vi.fn>;
+const server = apiFetchServer as ReturnType<typeof vi.fn>;
+
+async function pagina() {
+  const ui = await DesafioPage({
+    params: Promise.resolve({ id: "g1", desafioId: "d1" }),
+  });
+  render(ui);
+}
+
+beforeEach(() => {
+  safe.mockReset();
+  server.mockReset();
+});
+
+describe("DesafioPage state resolution", () => {
+  it("200 on intentos/me mounts the result", async () => {
+    safe.mockResolvedValueOnce({ status: 200, data: { id: "i1" } });
+    server.mockResolvedValueOnce([]);
+    await pagina();
+    expect(screen.getByText("RESULTADO")).toBeInTheDocument();
+    expect(safe).toHaveBeenCalledTimes(1);
+  });
+
+  it("404 then 200 on rendir mounts the quiz", async () => {
+    safe
+      .mockResolvedValueOnce({ status: 404, data: null })
+      .mockResolvedValueOnce({ status: 200, data: { id: "t1" } });
+    await pagina();
+    expect(screen.getByText("RENDIR")).toBeInTheDocument();
+  });
+
+  it("404 then 409 shows the closed block", async () => {
+    safe
+      .mockResolvedValueOnce({ status: 404, data: null })
+      .mockResolvedValueOnce({ status: 409, data: null });
+    await pagina();
+    expect(
+      screen.getByText("Este desafío ya no acepta intentos"),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link")).toHaveAttribute(
+      "href",
+      "/grupos/g1/desafios",
+    );
+  });
+
+  it("404 then 404 shows not found", async () => {
+    safe
+      .mockResolvedValueOnce({ status: 404, data: null })
+      .mockResolvedValueOnce({ status: 404, data: null });
+    await pagina();
+    expect(screen.getByText("Desafío no encontrado")).toBeInTheDocument();
+  });
+});
