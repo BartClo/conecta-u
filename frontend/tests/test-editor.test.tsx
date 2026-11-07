@@ -317,3 +317,83 @@ describe("edit mode", () => {
     expect(toFormValues(TEST).preguntas[0].correctaIndex).toBe(1);
   });
 });
+
+describe("payload after removing items (field registration shifts)", () => {
+  const dv = () => ({
+    titulo: "T",
+    descripcion: "",
+    preguntas: [
+      {
+        enunciado: "uno",
+        opciones: [{ texto: "a" }, { texto: "b" }],
+        correctaIndex: 0,
+      },
+      {
+        enunciado: "dos",
+        opciones: [{ texto: "x" }, { texto: "y" }, { texto: "z" }],
+        correctaIndex: 2,
+      },
+      {
+        enunciado: "tres",
+        opciones: [{ texto: "m" }, { texto: "n" }],
+        correctaIndex: 1,
+      },
+    ],
+  });
+
+  async function submit(onSubmit: ReturnType<typeof setup>) {
+    click("Guardar test");
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+    return onSubmit.mock.calls[0][0].preguntas;
+  }
+
+  it.each([0, 1, 2])(
+    "typing right after removing question %i reaches the payload",
+    async (pos) => {
+      const onSubmit = setup({ defaultValues: dv() });
+      fireEvent.click(
+        screen.getAllByRole("button", { name: "Quitar pregunta" })[pos],
+      );
+      // The first question after the removed slot is now at index `pos`
+      // (or the last one, if the removed was the last).
+      const q = Math.min(pos + 1, 2);
+      type(`Enunciado de la pregunta ${q}`, "DO");
+      type(`Opción 1 de la pregunta ${q}`, "X1");
+
+      const preguntas = await submit(onSubmit);
+
+      const esperadas = ["uno", "dos", "tres"];
+      esperadas.splice(pos, 1);
+      expect(preguntas.map((p: { enunciado: string }) => p.enunciado)).toEqual(
+        esperadas.map((e, i) => (i === q - 1 ? "DO" : e)),
+      );
+      expect(preguntas[q - 1].opciones[0].texto).toBe("X1");
+    },
+  );
+
+  it.each([0, 1, 2])(
+    "typing after removing option %i of a question reaches the payload",
+    async (pos) => {
+      const onSubmit = setup({ defaultValues: dv() });
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: `Quitar la opción ${pos + 1} de la pregunta 2`,
+        }),
+      );
+      type("Opción 1 de la pregunta 2", "Z1");
+      type("Opción 2 de la pregunta 2", "Z2");
+      // Removing the marked option clears the mark; re-mark so it validates.
+      fireEvent.click(
+        screen.getByLabelText(
+          "Marcar la opción 1 de la pregunta 2 como correcta",
+        ),
+      );
+
+      const preguntas = await submit(onSubmit);
+
+      expect(
+        preguntas[1].opciones.map((o: { texto: string }) => o.texto),
+      ).toEqual(["Z1", "Z2"]);
+    },
+  );
+});

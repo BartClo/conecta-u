@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   useController,
   useFieldArray,
@@ -40,6 +40,8 @@ export function PreguntaField({
     name: `preguntas.${qIndex}.correctaIndex`,
   });
   const error = errors.preguntas?.[qIndex];
+  const opcionesError =
+    error?.opciones?.root?.message ?? error?.opciones?.message;
 
   function handleRemoveOpcion(oIndex: number) {
     remove(oIndex);
@@ -53,7 +55,6 @@ export function PreguntaField({
       variants={staggerItem}
       initial="initial"
       animate="animate"
-      exit={{ opacity: 0, height: 0 }}
       className="space-y-3 rounded-xl border p-4"
     >
       <div className="flex items-center justify-between">
@@ -79,52 +80,43 @@ export function PreguntaField({
         animate="animate"
         className="space-y-2"
       >
-        <AnimatePresence initial={false}>
-          {fields.map((f, oIndex) => (
-            <motion.li
-              key={f.id}
-              variants={staggerItem}
-              exit={{ opacity: 0, height: 0 }}
-              className="space-y-1"
-            >
-              <div className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  name={`preguntas.${qIndex}.correctaIndex`}
-                  aria-label={`Marcar la opción ${oIndex + 1} de la pregunta ${qIndex + 1} como correcta`}
-                  checked={correcta.value === oIndex}
-                  onChange={() => correcta.onChange(oIndex)}
-                />
-                <Input
-                  aria-label={`Opción ${oIndex + 1} de la pregunta ${qIndex + 1}`}
-                  {...register(`preguntas.${qIndex}.opciones.${oIndex}.texto`)}
-                />
-                {fields.length > MIN_OPCIONES && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    aria-label={`Quitar la opción ${oIndex + 1} de la pregunta ${qIndex + 1}`}
-                    onClick={() => handleRemoveOpcion(oIndex)}
-                  >
-                    Quitar
-                  </Button>
-                )}
-              </div>
-              {error?.opciones?.[oIndex]?.texto && (
-                <p className="text-sm text-destructive">
-                  {error.opciones[oIndex].texto.message}
-                </p>
+        {fields.map((f, oIndex) => (
+          <motion.li key={f.id} variants={staggerItem} className="space-y-1">
+            <div className="flex items-center gap-2">
+              <input
+                type="radio"
+                name={`preguntas.${qIndex}.correctaIndex`}
+                aria-label={`Marcar la opción ${oIndex + 1} de la pregunta ${qIndex + 1} como correcta`}
+                checked={correcta.value === oIndex}
+                onChange={() => correcta.onChange(oIndex)}
+              />
+              <Input
+                aria-label={`Opción ${oIndex + 1} de la pregunta ${qIndex + 1}`}
+                {...register(`preguntas.${qIndex}.opciones.${oIndex}.texto`)}
+              />
+              {fields.length > MIN_OPCIONES && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  aria-label={`Quitar la opción ${oIndex + 1} de la pregunta ${qIndex + 1}`}
+                  onClick={() => handleRemoveOpcion(oIndex)}
+                >
+                  Quitar
+                </Button>
               )}
-            </motion.li>
-          ))}
-        </AnimatePresence>
+            </div>
+            {error?.opciones?.[oIndex]?.texto && (
+              <p className="text-sm text-destructive">
+                {error.opciones[oIndex].texto.message}
+              </p>
+            )}
+          </motion.li>
+        ))}
       </motion.ul>
 
-      {(error?.opciones?.root ?? error?.opciones) && (
-        <p className="text-sm text-destructive">
-          {error?.opciones?.root?.message ?? error?.opciones?.message}
-        </p>
+      {opcionesError && (
+        <p className="text-sm text-destructive">{opcionesError}</p>
       )}
       {error?.correctaIndex && (
         <p className="text-sm text-destructive">

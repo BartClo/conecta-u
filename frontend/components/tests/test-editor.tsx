@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
@@ -145,18 +145,19 @@ export function TestEditor({
         animate="animate"
         className="space-y-4"
       >
-        <AnimatePresence initial={false}>
-          {fields.map((f, qIndex) => (
-            <PreguntaField
-              key={f.id}
-              control={control}
-              register={register}
-              errors={errors}
-              qIndex={qIndex}
-              onRemove={() => remove(qIndex)}
-            />
-          ))}
-        </AnimatePresence>
+        {/* No exit animation on purpose: AnimatePresence keeps the removed item
+            mounted with its stale index, so two inputs share one RHF field name
+            and the payload gets the stale node's value. */}
+        {fields.map((f, qIndex) => (
+          <PreguntaField
+            key={f.id}
+            control={control}
+            register={register}
+            errors={errors}
+            qIndex={qIndex}
+            onRemove={() => remove(qIndex)}
+          />
+        ))}
       </motion.div>
       {preguntasError && (
         <p className="text-sm text-destructive">{preguntasError}</p>
