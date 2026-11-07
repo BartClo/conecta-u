@@ -34,6 +34,11 @@ export function NavSidebar({ userName, userEmail }: NavSidebarProps) {
             Calendario
           </Link>
         </li>
+        <li>
+          <Link href="/grupos" className="font-medium hover:text-primary">
+            Grupos
+          </Link>
+        </li>
         {PROXIMAMENTE_ITEMS.map((item) => (
           <li key={item} className="text-muted-foreground">
             {item} <span className="text-xs">(Próximamente)</span>

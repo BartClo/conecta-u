@@ -9,7 +9,7 @@ vi.mock("../lib/supabase/client", () => ({
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
 describe("NavSidebar", () => {
-  it("shows links to Cursos and Calendario, and placeholders for the rest", () => {
+  it("shows links to Cursos, Calendario and Grupos, and placeholders for the rest", () => {
     (createBrowserSupabaseClient as ReturnType<typeof vi.fn>).mockReturnValue({
       auth: { signOut: vi.fn() },
     });
@@ -23,6 +23,10 @@ describe("NavSidebar", () => {
     expect(screen.getByRole("link", { name: "Calendario" })).toHaveAttribute(
       "href",
       "/calendario",
+    );
+    expect(screen.getByRole("link", { name: "Grupos" })).toHaveAttribute(
+      "href",
+      "/grupos",
     );
     expect(screen.getByText("Chat IA")).toBeInTheDocument();
     expect(screen.getByText(/ada/i)).toBeInTheDocument();
