@@ -1,19 +1,11 @@
 import { Graph3D } from "@/components/dashboard/graph-3d";
 import { apiFetchServer } from "@/lib/api-server";
+import { semestreActivo } from "@/lib/semestre";
 import type { Curso, Semestre } from "@/lib/types";
 
 interface Me {
   name: string | null;
   email: string;
-}
-
-function semestreActivo(semestres: Semestre[]): Semestre | null {
-  const hoy = new Date().toISOString().slice(0, 10);
-  return (
-    semestres.find((s) => s.fecha_inicio <= hoy && hoy <= s.fecha_fin) ??
-    semestres.sort((a, b) => b.fecha_fin.localeCompare(a.fecha_fin))[0] ??
-    null
-  );
 }
 
 export default async function DashboardPage() {

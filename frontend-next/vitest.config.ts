@@ -8,6 +8,9 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     setupFiles: ["./tests/setup.ts"],
+    // e2e/ holds Playwright specs — they use @playwright/test, not vitest, and
+    // must not be collected by the unit runner.
+    exclude: ["node_modules/**", ".next/**", "e2e/**"],
     coverage: {
       provider: "v8",
       thresholds: { statements: 95, branches: 95, functions: 95, lines: 95 },
