@@ -1,6 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
@@ -194,3 +195,70 @@ def test_unirse_carrera_integrityerror_409(monkeypatch):
     monkeypatch.setattr(grupo_service, "get_membresia", primera_none)
     r = client.post("/api/grupos/unirse", json={"codigo": g["codigo_invitacion"]})
     assert r.status_code == 409
+
+
+def test_expulsar_regenera_codigo_pero_salir_no():
+    g = _grupo()
+    _unir("ana", g)
+    _unir("beto", g)
+    base = f"/api/grupos/{g['id']}"
+    _como("beto")
+    assert client.delete(f"{base}/miembros/beto").status_code == 204
+    _como("owner")
+    assert client.get(base).json()["codigo_invitacion"] == g["codigo_invitacion"]
+    assert client.delete(f"{base}/miembros/ana").status_code == 204
+    assert client.get(base).json()["codigo_invitacion"] != g["codigo_invitacion"]
+    _como("ana")
+    r = client.post("/api/grupos/unirse", json={"codigo": g["codigo_invitacion"]})
+    assert r.status_code == 404
+
+
+def _forzar_colision(monkeypatch, codigos):
+    """Salta el pre-chequeo para que la colision la detecte el UNIQUE en el commit."""
+    secuencia = iter(codigos)
+    monkeypatch.setattr(grupo_service, "_codigo_aleatorio", lambda: next(secuencia))
+    monkeypatch.setattr(grupo_service.repo, "get_by_codigo", lambda db, c: None)
+
+
+def test_crear_reintenta_ante_integrityerror(monkeypatch):
+    g = _grupo()
+    materia_id = g["materia_id"]
+    _forzar_colision(monkeypatch, [g["codigo_invitacion"], "QQQQQ2"])
+    r = client.post("/api/grupos", json={"nombre": "Otro", "materia_id": materia_id})
+    assert r.status_code == 201
+    assert r.json()["codigo_invitacion"] == "QQQQQ2"
+
+
+def test_regenerar_reintenta_ante_integrityerror(monkeypatch):
+    g = _grupo()
+    otro = client.post("/api/grupos", json={"nombre": "O", "materia_id": g["materia_id"]}).json()
+    _forzar_colision(monkeypatch, [otro["codigo_invitacion"], "QQQQQ3"])
+    r = client.post(f"/api/grupos/{g['id']}/codigo")
+    assert r.json()["codigo_invitacion"] == "QQQQQ3"
+
+
+def test_integrityerror_persistente_se_rinde_tras_5_intentos(monkeypatch):
+    g = _grupo()
+    llamadas = {"n": 0}
+
+    def siempre_igual():
+        llamadas["n"] += 1
+        return g["codigo_invitacion"]
+
+    _forzar_colision(monkeypatch, [])
+    monkeypatch.setattr(grupo_service, "_codigo_aleatorio", siempre_igual)
+    with TestSession() as db, pytest.raises(IntegrityError):
+        grupo_service.crear(db, user_id="owner", nombre="X", materia_id=g["materia_id"])
+    assert llamadas["n"] == 5
+
+
+def test_unirse_integrityerror_sin_membresia_404(monkeypatch):
+    g = _grupo()
+    _como("ana")
+
+    def falla(db, **kw):
+        raise IntegrityError("x", {}, Exception())
+
+    monkeypatch.setattr(grupo_service.repo, "add_miembro", falla)
+    r = client.post("/api/grupos/unirse", json={"codigo": g["codigo_invitacion"]})
+    assert r.status_code == 404
