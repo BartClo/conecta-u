@@ -66,6 +66,9 @@ describe("TestsClient", () => {
       "href",
       "/materias/m1/tests/nuevo",
     );
+    expect(
+      screen.getByRole("link", { name: "Generar con IA" }),
+    ).toHaveAttribute("href", "/materias/m1/tests/nuevo-ia");
   });
 
   it("lists cards with question count and author label", () => {

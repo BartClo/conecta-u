@@ -240,3 +240,42 @@ export interface LeaderboardEntry {
   suma_puntajes: number;
   posicion: number;
 }
+
+// --- IA (phase D) ---
+export type TipoGeneracionIA = "test" | "resumen";
+export type EstadoGeneracionIA = "ok" | "error";
+
+export interface GeneracionIA {
+  id: string;
+  user_id: string;
+  tipo: TipoGeneracionIA;
+  costo_creditos: number;
+  resultado_ref_tipo: "test" | "resumen" | null;
+  resultado_ref_id: string | null;
+  estado: EstadoGeneracionIA;
+  error_msg: string | null;
+  created_at: string;
+}
+
+export interface Resumen {
+  id: string;
+  user_id: string;
+  materia_id: string | null;
+  titulo: string;
+  contenido_fuente: string;
+  contenido_resumen: string;
+  created_at: string;
+}
+
+// Envelopes of POST /api/ia/tests and POST /api/ia/resumenes.
+export interface GeneracionTestResponse {
+  test: Test;
+  costo_creditos: number;
+  saldo_restante: number;
+}
+
+export interface GeneracionResumenResponse {
+  resumen: Resumen;
+  costo_creditos: number;
+  saldo_restante: number;
+}

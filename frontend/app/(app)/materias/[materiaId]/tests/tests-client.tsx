@@ -18,12 +18,20 @@ export function TestsClient({ materiaId, tests, userId }: TestsClientProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Tests de la materia</h1>
-        <Link
-          href={`/materias/${materiaId}/tests/nuevo`}
-          className={buttonVariants()}
-        >
-          Crear test
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            href={`/materias/${materiaId}/tests/nuevo-ia`}
+            className={buttonVariants({ variant: "outline" })}
+          >
+            Generar con IA
+          </Link>
+          <Link
+            href={`/materias/${materiaId}/tests/nuevo`}
+            className={buttonVariants()}
+          >
+            Crear test
+          </Link>
+        </div>
       </div>
 
       {tests.length === 0 ? (

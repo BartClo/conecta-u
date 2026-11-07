@@ -54,7 +54,12 @@ describe("NavSidebar", () => {
       "href",
       "/grupos",
     );
-    expect(screen.getByText("Chat IA")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Asistente IA" })).toHaveAttribute(
+      "href",
+      "/ia/resumenes",
+    );
+    expect(screen.queryByText("Chat IA")).not.toBeInTheDocument();
+    expect(screen.getByText("Perfil")).toBeInTheDocument();
     expect(screen.getByText(/ada/i)).toBeInTheDocument();
   });
 

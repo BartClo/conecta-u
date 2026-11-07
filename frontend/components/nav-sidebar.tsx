@@ -6,7 +6,7 @@ import { SaldoIndicator } from "@/components/creditos/saldo-indicator";
 import { Button } from "@/components/ui/button";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
-const PROXIMAMENTE_ITEMS = ["Chat IA", "Perfil"];
+const PROXIMAMENTE_ITEMS = ["Perfil"];
 
 interface NavSidebarProps {
   userName: string | null;
@@ -50,6 +50,11 @@ export function NavSidebar({ userName, userEmail }: NavSidebarProps) {
             Créditos
           </Link>
           <SaldoIndicator />
+        </li>
+        <li>
+          <Link href="/ia/resumenes" className="font-medium hover:text-primary">
+            Asistente IA
+          </Link>
         </li>
         {PROXIMAMENTE_ITEMS.map((item) => (
           <li key={item} className="text-muted-foreground">
