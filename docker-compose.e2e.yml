@@ -1,0 +1,109 @@
+# Entorno local completo sin Supabase ni clave LLM. NUNCA usar en produccion.
+#   App:  docker compose -f docker-compose.e2e.yml up --build   -> http://localhost:3001
+#   QA:   scripts/e2e.sh (anade el perfil "qa": servicios en modo normal para probar guardas)
+name: conecta-u-e2e
+
+x-backend-env: &backend-env
+  DATABASE_URL: postgresql+psycopg2://conecta_u:conecta_u@postgres:5432/conecta_u_e2e
+  LLM_PROVIDER: fake
+
+x-backend-health: &backend-health
+  test:
+    - CMD
+    - python
+    - -c
+    - "import urllib.request as u; u.urlopen('http://localhost:8000/health')"
+  interval: 3s
+  timeout: 3s
+  retries: 40
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: conecta_u_e2e
+      POSTGRES_USER: conecta_u
+      POSTGRES_PASSWORD: conecta_u
+    volumes:
+      - e2e_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U conecta_u -d conecta_u_e2e"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  backend:
+    build: ./backend
+    command: sh -c "alembic upgrade head && exec uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    environment:
+      <<: *backend-env
+      AUTH_MODE: test
+      APP_ENV: test
+      TEST_AUTH_SECRET: e2e-only-secret-not-used-anywhere-else-0123456789
+      CORS_ORIGINS: http://localhost:3001
+    ports:
+      - "8001:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck: *backend-health
+
+  web:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_AUTH_MODE: test
+        NEXT_PUBLIC_API_BASE_URL: http://localhost:8001
+    environment:
+      API_INTERNAL_URL: http://backend:8000
+    ports:
+      - "3001:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck: &web-health
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://localhost:3000/login').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"
+      interval: 3s
+      timeout: 5s
+      retries: 40
+
+  # Perfil qa: misma base, modo normal. Prueba que el bypass no existe fuera de e2e.
+  backend-supabase:
+    profiles: [qa]
+    build: ./backend
+    environment:
+      <<: *backend-env
+      APP_ENV: production
+      SUPABASE_URL: http://supabase.invalid
+      SUPABASE_JWKS_URL: http://supabase.invalid/auth/v1/.well-known/jwks.json
+      CORS_ORIGINS: http://localhost:3002
+    ports:
+      - "8002:8000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck: *backend-health
+
+  web-normal:
+    profiles: [qa]
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_BASE_URL: http://localhost:8002
+    environment:
+      API_INTERNAL_URL: http://backend-supabase:8000
+      # A proposito: el modo se fija en build, este env de runtime no debe activarlo.
+      NEXT_PUBLIC_AUTH_MODE: test
+    ports:
+      - "3002:3000"
+    depends_on:
+      backend-supabase:
+        condition: service_healthy
+    healthcheck: *web-health
+
+volumes:
+  e2e_pgdata:
