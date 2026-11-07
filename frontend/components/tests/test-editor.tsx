@@ -46,7 +46,10 @@ const testSchema = z.object({
     .min(1, "Agrega al menos una pregunta"),
 });
 
-export type TestFormValues = z.infer<typeof testSchema>;
+// Input type: correctaIndex is null until a radio is marked; the schema output
+// (what onValid receives) guarantees a number.
+export type TestFormValues = z.input<typeof testSchema>;
+export type TestOutput = z.output<typeof testSchema>;
 
 export function toFormValues(test: Test): TestFormValues {
   return {
@@ -81,7 +84,7 @@ export function TestEditor({
     control,
     handleSubmit,
     formState: { errors },
-  } = useForm<TestFormValues>({
+  } = useForm<TestFormValues, unknown, TestOutput>({
     resolver: zodResolver(testSchema),
     defaultValues: defaultValues ?? {
       titulo: "",
@@ -96,7 +99,7 @@ export function TestEditor({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function onValid(values: TestFormValues) {
+  async function onValid(values: TestOutput) {
     setPending(true);
     setError(null);
     try {

@@ -12,12 +12,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { staggerContainer, staggerItem } from "@/lib/motion";
-import type { TestFormValues } from "./test-editor";
+import type { TestFormValues, TestOutput } from "./test-editor";
 
 const MIN_OPCIONES = 2;
 
 interface PreguntaFieldProps {
-  control: Control<TestFormValues>;
+  control: Control<TestFormValues, unknown, TestOutput>;
   register: UseFormRegister<TestFormValues>;
   errors: FieldErrors<TestFormValues>;
   qIndex: number;
