@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { SaldoIndicator } from "@/components/creditos/saldo-indicator";
 import { Button } from "@/components/ui/button";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
@@ -38,6 +39,12 @@ export function NavSidebar({ userName, userEmail }: NavSidebarProps) {
           <Link href="/grupos" className="font-medium hover:text-primary">
             Grupos
           </Link>
+        </li>
+        <li className="flex items-center justify-between">
+          <Link href="/creditos" className="font-medium hover:text-primary">
+            Créditos
+          </Link>
+          <SaldoIndicator />
         </li>
         {PROXIMAMENTE_ITEMS.map((item) => (
           <li key={item} className="text-muted-foreground">

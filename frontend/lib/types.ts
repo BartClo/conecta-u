@@ -107,3 +107,31 @@ export interface TestPayload {
     opciones: { texto: string; es_correcta: boolean }[];
   }[];
 }
+
+export type MotivoCredito =
+  | "bono_inicial"
+  | "gano_desafio"
+  | "genero_test_ia"
+  | "genero_resumen_ia"
+  | "ajuste";
+
+export interface SaldoCreditoOut {
+  saldo: number;
+}
+
+export interface MovimientoCreditoOut {
+  id: string;
+  delta: number;
+  motivo: MotivoCredito;
+  ref_tipo: string | null;
+  ref_id: string | null;
+  saldo_resultante: number;
+  created_at: string;
+}
+
+export interface MovimientosCreditoOut {
+  items: MovimientoCreditoOut[];
+  limit: number;
+  offset: number;
+  total: number;
+}
