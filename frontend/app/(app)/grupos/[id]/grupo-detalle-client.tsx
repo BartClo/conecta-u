@@ -70,14 +70,24 @@ export function GrupoDetalleClient({
   function handleExpulsar(m: Miembro) {
     if (!confirm(`¿Expulsar a ${m.nombre ?? m.email}?`)) return;
     return run(async () => {
-      await apiFetchClient(`/api/grupos/${grupo.id}/miembros/${m.user_id}`, {
-        method: "DELETE",
-      });
+      try {
+        await apiFetchClient(`/api/grupos/${grupo.id}/miembros/${m.user_id}`, {
+          method: "DELETE",
+        });
+      } catch (err) {
+        // 404: already gone, which is what we wanted.
+        if (!(err instanceof Error && err.message.endsWith("404"))) throw err;
+      }
       setMiembros((prev) => prev.filter((x) => x.user_id !== m.user_id));
       setGrupo((prev) => ({
         ...prev,
         miembros_count: prev.miembros_count - 1,
       }));
+      // Kicking rotates the invite code: refetch to show the new one.
+      const fresco = await apiFetchClient<GrupoDetalle>(
+        `/api/grupos/${grupo.id}`,
+      );
+      setGrupo((prev) => ({ ...prev, ...fresco }));
     });
   }
 
@@ -105,7 +115,8 @@ export function GrupoDetalleClient({
         <h1 className="text-xl font-semibold">{grupo.nombre}</h1>
         <p className="text-muted-foreground">{grupo.materia_nombre}</p>
         <p className="text-sm text-muted-foreground">
-          {grupo.miembros_count} miembros
+          {grupo.miembros_count}{" "}
+          {grupo.miembros_count === 1 ? "miembro" : "miembros"}
         </p>
       </div>
 

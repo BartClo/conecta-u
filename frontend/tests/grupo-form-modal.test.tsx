@@ -61,6 +61,53 @@ describe("GrupoFormModal", () => {
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
+  it("shows the name error when the name is empty but the materia is valid", async () => {
+    api.mockResolvedValue([CALCULO]);
+    const onSubmit = vi.fn();
+    render(<GrupoFormModal onSubmit={onSubmit} onClose={vi.fn()} />);
+
+    await openCombobox();
+    fireEvent.click(await screen.findByText("Cálculo"));
+    fireEvent.click(screen.getByRole("button", { name: /guardar/i }));
+
+    expect(await screen.findByText(/escribe un nombre/i)).toBeInTheDocument();
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("rejects names longer than 120 characters", async () => {
+    api.mockResolvedValue([CALCULO]);
+    const onSubmit = vi.fn();
+    render(<GrupoFormModal onSubmit={onSubmit} onClose={vi.fn()} />);
+
+    fireEvent.change(screen.getByLabelText(/^nombre$/i), {
+      target: { value: "x".repeat(121) },
+    });
+    await openCombobox();
+    fireEvent.click(await screen.findByText("Cálculo"));
+    fireEvent.click(screen.getByRole("button", { name: /guardar/i }));
+
+    await waitFor(() => expect(onSubmit).not.toHaveBeenCalled());
+    expect(screen.getByRole("button", { name: /guardar/i })).toBeEnabled();
+  });
+
+  it("clears the materia error once a materia is picked", async () => {
+    api.mockResolvedValue([CALCULO]);
+    render(<GrupoFormModal onSubmit={vi.fn()} onClose={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /guardar/i }));
+    expect(
+      await screen.findByText(/selecciona una materia/i),
+    ).toBeInTheDocument();
+    await openCombobox();
+    fireEvent.click(await screen.findByText("Cálculo"));
+
+    await waitFor(() =>
+      expect(
+        screen.queryByText(/selecciona una materia/i),
+      ).not.toBeInTheDocument(),
+    );
+  });
+
   it("loads recent materias on open and submits the selected one", async () => {
     api.mockResolvedValue([CALCULO]);
     const onSubmit = vi.fn().mockResolvedValue(undefined);

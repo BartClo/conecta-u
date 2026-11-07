@@ -13,7 +13,7 @@ import { modalVariants } from "@/lib/motion";
 import type { Grupo, Materia } from "@/lib/types";
 
 const schema = z.object({
-  nombre: z.string().trim().min(1),
+  nombre: z.string().trim().min(1, "Escribe un nombre.").max(120),
   materia_id: z.string().min(1, "Selecciona una materia."),
 });
 
@@ -35,6 +35,7 @@ export function GrupoFormModal({
     register,
     handleSubmit,
     setValue,
+    clearErrors,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -76,6 +77,11 @@ export function GrupoFormModal({
           <div className="space-y-1">
             <Label htmlFor="nombre">Nombre</Label>
             <Input id="nombre" {...register("nombre")} />
+            {errors.nombre && (
+              <p className="text-sm text-destructive">
+                {errors.nombre.message}
+              </p>
+            )}
           </div>
 
           {!grupo && (
@@ -85,6 +91,8 @@ export function GrupoFormModal({
                 value={materia}
                 onChange={(m) => {
                   setMateria(m);
+                  setError(null);
+                  clearErrors("materia_id");
                   setValue("materia_id", m.id, { shouldValidate: true });
                 }}
                 onError={setError}

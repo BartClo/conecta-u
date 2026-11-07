@@ -18,8 +18,9 @@ export default async function GrupoDetallePage({
       apiFetchServer<Miembro[]>(`/api/grupos/${id}/miembros`),
       apiFetchServer<{ id: string }>("/api/me"),
     ]);
-  } catch {
-    notFound();
+  } catch (err) {
+    if (err instanceof Error && err.message.endsWith("404")) notFound();
+    throw err;
   }
 
   return (

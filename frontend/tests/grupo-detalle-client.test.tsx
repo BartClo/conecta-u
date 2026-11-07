@@ -152,7 +152,38 @@ describe("GrupoDetalleClient as owner", () => {
     expect(api).toHaveBeenCalledWith("/api/grupos/g1/miembros/u2", {
       method: "DELETE",
     });
-    expect(screen.getByText("1 miembros")).toBeInTheDocument();
+    expect(screen.getByText("1 miembro")).toBeInTheDocument();
+  });
+
+  it("shows the rotated code fetched after expelling", async () => {
+    confirmWith(true);
+    api.mockImplementation(async (_p: string, opts?: { method?: string }) =>
+      opts?.method === "DELETE"
+        ? undefined
+        : { ...GRUPO, codigo_invitacion: "NEW999", miembros_count: 1 },
+    );
+    renderOwner();
+
+    fireEvent.click(screen.getByRole("button", { name: /expulsar/i }));
+
+    expect(await screen.findByText("NEW999")).toBeInTheDocument();
+    expect(api).toHaveBeenCalledWith("/api/grupos/g1");
+  });
+
+  it("treats a 404 when expelling as success", async () => {
+    confirmWith(true);
+    api.mockImplementation(async (_p: string, opts?: { method?: string }) => {
+      if (opts?.method === "DELETE") throw new Error("API request failed: 404");
+      return { ...GRUPO, miembros_count: 1 };
+    });
+    renderOwner();
+
+    fireEvent.click(screen.getByRole("button", { name: /expulsar/i }));
+
+    await waitFor(() =>
+      expect(screen.queryByText("beto@x.com")).not.toBeInTheDocument(),
+    );
+    expect(screen.queryByText(/failed: 404/)).not.toBeInTheDocument();
   });
 
   it("shows the error when a mutation fails and keeps the member", async () => {

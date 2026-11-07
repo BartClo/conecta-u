@@ -93,6 +93,23 @@ describe("GruposClient", () => {
     });
   });
 
+  it("puts a newly joined grupo first in the list", async () => {
+    api.mockResolvedValue({ ...GRUPO, id: "g2", nombre: "Nuevo" });
+    render(<GruposClient initialGrupos={[GRUPO]} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /unirse con c.digo/i }));
+    fireEvent.change(screen.getByLabelText(/c.digo/i), {
+      target: { value: "abc234" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /^unirse$/i }));
+
+    await waitFor(() => expect(screen.getAllByRole("link")).toHaveLength(2));
+    expect(screen.getAllByRole("link")[0]).toHaveAttribute(
+      "href",
+      "/grupos/g2",
+    );
+  });
+
   it.each([
     [404, /inv.lido o inexistente/i],
     [409, /ya eres miembro/i],

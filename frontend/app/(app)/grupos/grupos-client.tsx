@@ -21,7 +21,7 @@ export function GruposClient({ initialGrupos }: { initialGrupos: Grupo[] }) {
       body: data,
     });
     setShowCrearModal(false);
-    setGrupos((prev) => [...prev, nuevo]);
+    setGrupos((prev) => [nuevo, ...prev]);
   }
 
   async function handleUnirse(codigo: string) {
@@ -30,7 +30,7 @@ export function GruposClient({ initialGrupos }: { initialGrupos: Grupo[] }) {
       body: { codigo },
     });
     setShowUnirseModal(false);
-    setGrupos((prev) => [...prev, grupo]);
+    setGrupos((prev) => [grupo, ...prev]);
   }
 
   return (
