@@ -508,13 +508,21 @@ test.describe("Integridad economica", () => {
 test.describe("Fuga de secretos y headers", () => {
   test("[SEC-01] respuestas y errores no incluyen secretos ni stack traces", async () => {
     const u = await nuevoUsuario("Curioso");
+    const materia = await crearMateria(u);
+    // Con materia real el fallo llega al proveedor: 502, no el 404 de materia inexistente.
+    const falloProveedor = await u.post("/api/ia/tests", {
+      materia_id: materia.id,
+      tema: "__fallar__",
+      n_preguntas: 1,
+    });
+    expect(falloProveedor.status).toBe(502);
     const respuestasApi = [
       await u.get("/api/me"),
       await call("GET", "/openapi.json", {}),
       await call("GET", "/no-existe", {}),
       await u.get("/api/grupos/no-existe"),
       await u.post("/api/grupos", { nombre: "" }),
-      await u.post("/api/ia/tests", { materia_id: "x", tema: "__fallar__" }),
+      falloProveedor,
       await call("POST", "/api/test/login", { body: { email: "no-es-email" } }),
     ];
     for (const r of respuestasApi) {

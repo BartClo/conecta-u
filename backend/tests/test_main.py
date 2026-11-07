@@ -1,3 +1,5 @@
+import logging
+
 import pytest
 from fastapi.testclient import TestClient
 from psycopg2.extensions import QuotedString
@@ -34,11 +36,17 @@ def test_texto_con_nul_da_422():
     assert r.status_code == 422
 
 
-def test_texto_largo_da_422_sin_filtrar_sql():
-    exc = DataError("INSERT secreto", {}, Exception("value too long"))
-    r = _cliente_que_lanza(exc).get("/boom")
+def test_texto_largo_da_422_sin_filtrar_sql(caplog, monkeypatch):
+    # fileConfig de alembic (otros tests) puede dejar el logger deshabilitado.
+    monkeypatch.setattr(logging.getLogger("app.main"), "disabled", False)
+    exc = DataError("INSERT secreto", {"p": "parametro"}, Exception("value too long"))
+    with caplog.at_level("WARNING", logger="app.main"):
+        r = _cliente_que_lanza(exc).get("/boom")
     assert r.status_code == 422
     assert "secreto" not in r.text
+    assert "DataError" in caplog.text
+    assert "secreto" not in caplog.text
+    assert "parametro" not in caplog.text
 
 
 @pytest.mark.parametrize(

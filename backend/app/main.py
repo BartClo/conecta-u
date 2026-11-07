@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -15,11 +17,15 @@ from app.api.semestres import router as semestres_router
 from app.api.tests import router as tests_router
 from app.core.config import Settings, get_settings
 
+logger = logging.getLogger(__name__)
+
 
 def _dato_rechazado_por_la_db(request: Request, exc: Exception) -> JSONResponse:
     # Texto mas largo que la columna (DataError) o con NUL: error del cliente en cualquier
     # endpoint. psycopg2 lanza ValueError sin envolver ante NUL; otro ValueError es un 500.
     if isinstance(exc, DataError) or "cannot contain NUL" in str(exc):
+        # Solo el tipo: el mensaje de DataError trae SQL y parametros.
+        logger.warning("Dato rechazado por la DB (422): %s", type(exc).__name__)
         return JSONResponse(status_code=422, content={"detail": "Datos no válidos"})
     raise exc
 

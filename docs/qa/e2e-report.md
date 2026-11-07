@@ -70,9 +70,9 @@ La evidencia es la aserción del propio test (`frontend/e2e/`, buscar por ID) y 
 | IDOR-04 | IDOR/BOLA | semestre, curso y evento ajenos dan 404 | seguridad | PASS | 0.5s |
 | IDOR-05 | IDOR/BOLA | colgar recursos propios de padres ajenos se rechaza | seguridad | PASS | 0.3s |
 | IDOR-06 | IDOR/BOLA | resumen ajeno da 404 y no aparece en el listado | seguridad | PASS | 0.1s |
-| IDOR-07 | IDOR/BOLA | pagina de grupo y de desafio ajenos no muestran datos | seguridad | PASS | 0.6s |
+| IDOR-07 | IDOR/BOLA | la pagina de desafio ajeno no muestra datos (ni titulo ni preguntas) | seguridad | PASS | 0.6s |
 | IDOR-08 | IDOR/BOLA | expulsado pierde acceso y el codigo viejo no sirve | seguridad | PASS | 0.3s |
-| IDOR-09 | IDOR/BOLA | sin token o con basura todo endpoint privado da 401 | seguridad | PASS | 0.2s |
+| IDOR-09 | IDOR/BOLA | sin token o con basura, 6 rutas privadas representativas dan 401 | seguridad | PASS | 0.2s |
 | VERT-01 | Autorización vertical | member no puede acciones de owner (403) | seguridad | PASS | 0.4s |
 | VERT-02 | Autorización vertical | la UI de member no muestra Cerrar desafio antes de fecha_fin | seguridad | PASS | 0.7s |
 | VERT-03 | Autorización vertical | owner no puede salir de su propio grupo (409) | seguridad | PASS | 0.3s |
@@ -102,8 +102,8 @@ La evidencia es la aserción del propio test (`frontend/e2e/`, buscar por ID) y 
 | INY-06 | Inyección | referencias inexistentes dan error de cliente, no 500 | seguridad | PASS | 0.3s |
 | INY-07 | Inyección | fechas invalidas dan 422 y no 500 | seguridad | PASS | 0.2s |
 | GUA-01 | Guardas modo test | POST /api/test/login responde 404 y no figura en OpenAPI | seguridad | PASS | 0.1s |
-| GUA-02 | Guardas modo test | un token HS256 de test emitido por el modo test da 401 | seguridad | PASS | 0.2s |
-| GUA-03 | Guardas modo test | un token HS256 forjado con el secreto de test da 401 | seguridad | PASS | 0.1s |
+| GUA-02 | Guardas modo test | un token HS256 de test emitido por el modo test no abre /api/me en modo normal (sin JWKS no hay otro camino) | seguridad | PASS | 0.2s |
+| GUA-03 | Guardas modo test | un token HS256 forjado con el secreto de test no abre /api/me en modo normal (sin JWKS no hay otro camino) | seguridad | PASS | 0.1s |
 | GUA-04 | Guardas modo test | control: el modo test si acepta su propio token | seguridad | PASS | 0.1s |
 | GUA-05 | Guardas modo test | backend con AUTH_MODE=test y APP_ENV=production no arranca | seguridad | PASS | 1.2s |
 | GUA-06 | Guardas modo test | backend con AUTH_MODE=test sin secreto no arranca | seguridad | PASS | 1.2s |
@@ -154,7 +154,7 @@ La evidencia es la aserción del propio test (`frontend/e2e/`, buscar por ID) y 
 | Baja | Sin headers de seguridad en el frontend | `next.config.ts` no define CSP, `X-Frame-Options` ni similares. React escapó el XSS probado (INY-03), pero no hay defensa adicional. |
 | Baja | Semestre con fin anterior al inicio | El schema no lo valida; INY-07 solo comprueba que no responda 500. Es un problema de datos, no de seguridad. |
 | Baja | Token Supabase válido sin `email` | `backend/app/core/security.py:61` daría `KeyError` y 500. Visto en revisión de código, no ejecutado; con Google OAuth el email siempre viene. El modo test sí lo exige. |
-| Baja | Imágenes Docker como root y secreto de test en el compose | Solo aplican al entorno e2e local; ese secreto no sirve fuera de él (GUA-02, GUA-03) y no está en los bundles (GUA-10). |
+| Baja | Imágenes Docker como root y secreto de test en el compose | Solo aplican al entorno e2e local; ese secreto no sirve fuera de él (GUA-02 y GUA-03 prueban que no hay camino alternativo sin JWKS; que el backend normal rechace HS256 lo prueba el unitario `test_supabase_no_tiene_ruta_de_login_y_rechaza_hs256`) y no está en los bundles (GUA-10). |
 
 No verificado aquí: flujo real con Supabase y Google OAuth, proveedor Claude real, navegadores distintos de Chromium, ejecución en Linux o CI (`ci.yml` no corre esta suite) y carga o rendimiento.
 
@@ -177,4 +177,17 @@ scripts/e2e.sh -g "ECO-"
 E2E_KEEP=1 scripts/e2e.sh
 ```
 
-El modo test solo arranca con `APP_ENV=test` o `local`. No uses este compose en producción.
+El modo test solo arranca con `APP_ENV=test` o `local`. No uses este compose en producción. Los puertos se publican solo en `127.0.0.1`.
+
+Variables que usa el entorno:
+
+| Variable | Dónde | Efecto |
+|---|---|---|
+| `AUTH_MODE` | backend | `supabase` (por defecto) o `test`. En `test` monta `/api/test/login` y valida tokens HS256 con `TEST_AUTH_SECRET`. |
+| `APP_ENV` | backend | `AUTH_MODE=test` solo arranca con `test` o `local`; sin definir o con otro valor el proceso aborta. |
+| `CORS_ORIGINS` | backend | Orígenes permitidos separados por coma; `*` se rechaza. Por defecto solo `http://localhost:3000`, así que el frontend del compose (3001, 3002) debe declararse (el compose ya lo hace). |
+| `API_INTERNAL_URL` | frontend (runtime) | URL del backend vista desde el contenedor web (`http://backend:8000`), para el render en servidor. |
+| `NEXT_PUBLIC_AUTH_MODE` | frontend (build) | Se fija al construir; el valor de runtime no activa el modo test. |
+| `NEXT_PUBLIC_API_BASE_URL` | frontend (build) | URL del backend vista desde el navegador. |
+
+`frontend/.env.local.example` no se modificó: mi permiso no permite leer ni editar ese archivo.

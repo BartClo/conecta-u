@@ -136,17 +136,20 @@ def test_cors_rechaza_comodin_y_parte_por_comas():
 
 
 def test_supabase_no_tiene_ruta_de_login_y_rechaza_hs256(monkeypatch):
-    client = cliente(monkeypatch, settings(**SUPABASE))
+    client_cfg = settings(**SUPABASE)
+    client = cliente(monkeypatch, client_cfg)
     assert client.post("/api/test/login", json={"email": "a@b.co"}).status_code == 404
     assert not [r for r in client.app.routes if "/api/test" in getattr(r, "path", "")]
 
-    # Confusion de algoritmo: aun si la clave resuelta es el secreto, HS256 no se admite.
+    # Confusion de algoritmo: el token cumple aud, iss, exp y claims, y el JWKS devuelve el
+    # secreto como clave; solo el algoritmo (HS256) puede causar el rechazo.
     class Jwks:
         def get_signing_key_from_jwt(self, token):
             return type("K", (), {"key": SECRET})()
 
     monkeypatch.setattr(security, "_get_jwks_client", lambda: Jwks())
-    assert client.get("/api/me", headers=bearer(hs256())).status_code == 401
+    token = hs256(aud="authenticated", iss=client_cfg.supabase_issuer)
+    assert client.get("/api/me", headers=bearer(token)).status_code == 401
 
 
 def test_supabase_hs256_con_jwks_inalcanzable_da_401(monkeypatch):
