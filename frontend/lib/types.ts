@@ -14,6 +14,37 @@ export interface Curso {
   color: string;
 }
 
+export interface Materia {
+  id: string;
+  nombre: string;
+  nombre_normalizado: string;
+  created_by: string;
+}
+
+export type RolMembresia = "owner" | "member";
+
+export interface Grupo {
+  id: string;
+  nombre: string;
+  materia_id: string;
+  materia_nombre: string;
+  owner_id: string;
+  codigo_invitacion: string;
+}
+
+// GET /api/grupos/{id}: adds the caller's role and the member count
+export interface GrupoDetalle extends Grupo {
+  rol: RolMembresia;
+  miembros_count: number;
+}
+
+export interface Miembro {
+  user_id: string;
+  nombre: string | null;
+  email: string;
+  rol: RolMembresia;
+}
+
 export type TipoEvento = "examen" | "entrega" | "clase" | "personal" | "otro";
 
 export interface Evento {
