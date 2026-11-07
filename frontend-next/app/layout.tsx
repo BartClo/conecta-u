@@ -20,7 +20,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Conecta-U",
-  description: "Productividad universitaria",
+  description: "Sistema operativo para la vida universitaria",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

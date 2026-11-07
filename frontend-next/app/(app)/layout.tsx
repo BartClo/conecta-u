@@ -1,6 +1,10 @@
 import { NavSidebar } from "@/components/nav-sidebar";
 import { apiFetchServer } from "@/lib/api-server";
 
+// Every route in this group is authenticated and renders per-user data from
+// the backend, so none of it can be prerendered statically.
+export const dynamic = "force-dynamic";
+
 interface Me {
   name: string | null;
   email: string;
