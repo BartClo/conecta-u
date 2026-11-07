@@ -143,3 +143,57 @@ describe("RankingClient", () => {
     expect(screen.getByText("Todavía no hay materias.")).toBeInTheDocument();
   });
 });
+
+describe("Leaderboard trofeo", () => {
+  it("only shows the trophy when the leader has won something", () => {
+    const { container, rerender } = render(
+      <Leaderboard entries={CINCO} vacio="v" />,
+    );
+    expect(container.querySelector("svg.lucide-trophy")).not.toBeNull();
+    rerender(
+      <Leaderboard
+        entries={[entry(1, { desafios_ganados: 0 }), entry(2)]}
+        vacio="v"
+      />,
+    );
+    expect(container.querySelector("svg.lucide-trophy")).toBeNull();
+  });
+});
+
+describe("RankingClient carreras", () => {
+  it("ignores a stale response from a previous materia and clears entries", async () => {
+    let tarde!: (v: unknown) => void;
+    api.mockReturnValueOnce(new Promise((r) => (tarde = r)));
+    api.mockResolvedValueOnce([entry(1, { nombre: "Actual" })]);
+    render(<RankingClient materias={MATERIAS} initialEntries={CINCO} />);
+    fireEvent.change(screen.getByLabelText("Materia"), {
+      target: { value: "m2" },
+    });
+    expect(screen.queryByText("Persona1")).toBeNull();
+    fireEvent.change(screen.getByLabelText("Materia"), {
+      target: { value: "m1" },
+    });
+    expect(await screen.findByText("Actual")).toBeInTheDocument();
+    tarde([entry(1, { nombre: "Vieja" })]);
+    await new Promise((r) => setTimeout(r, 0));
+    expect(screen.queryByText("Vieja")).toBeNull();
+    expect(screen.getByText("Actual")).toBeInTheDocument();
+  });
+
+  it("ignores a stale error", async () => {
+    let falla!: (e: unknown) => void;
+    api.mockReturnValueOnce(new Promise((_, rej) => (falla = rej)));
+    api.mockResolvedValueOnce([entry(1, { nombre: "Actual" })]);
+    render(<RankingClient materias={MATERIAS} initialEntries={CINCO} />);
+    fireEvent.change(screen.getByLabelText("Materia"), {
+      target: { value: "m2" },
+    });
+    fireEvent.change(screen.getByLabelText("Materia"), {
+      target: { value: "m1" },
+    });
+    expect(await screen.findByText("Actual")).toBeInTheDocument();
+    falla(new Error("vieja"));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+});

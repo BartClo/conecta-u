@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Leaderboard } from "@/components/ranking/leaderboard";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -21,18 +21,24 @@ export function RankingClient({
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const actual = useRef(materiaId);
+
   async function cargar(id: string) {
+    actual.current = id;
     setMateriaId(id);
+    setEntries([]);
     setCargando(true);
     setError(null);
     try {
-      setEntries(
-        await apiFetchClient<LeaderboardEntry[]>(`/api/materias/${id}/ranking`),
+      const datos = await apiFetchClient<LeaderboardEntry[]>(
+        `/api/materias/${id}/ranking`,
       );
+      if (actual.current === id) setEntries(datos);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Algo salió mal.");
+      if (actual.current === id)
+        setError(err instanceof Error ? err.message : "Algo salió mal.");
     } finally {
-      setCargando(false);
+      if (actual.current === id) setCargando(false);
     }
   }
 

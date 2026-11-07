@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Trophy } from "lucide-react";
@@ -16,7 +17,8 @@ import type {
 
 interface DesafioRankingProps {
   desafio: DesafioDetalle;
-  ranking: RankingDesafioEntry[];
+  // null: sin tabla (solo la accion de cerrar, p. ej. mientras aun no se rinde).
+  ranking: RankingDesafioEntry[] | null;
   userId: string;
 }
 
@@ -26,6 +28,7 @@ export function DesafioRanking({
   userId,
 }: DesafioRankingProps) {
   const queryClient = useQueryClient();
+  const router = useRouter();
   const reduced = useReducedMotionSafe();
   const [desafio, setDesafio] = useState(inicial);
   const [cerrando, setCerrando] = useState(false);
@@ -54,6 +57,7 @@ export function DesafioRanking({
       );
       setDesafio((prev) => ({ ...prev, ...r }));
       await queryClient.invalidateQueries({ queryKey: ["creditos"] });
+      router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Algo salió mal.");
     } finally {
@@ -63,7 +67,7 @@ export function DesafioRanking({
 
   return (
     <div className="space-y-4">
-      <h2 className="font-semibold">Ranking del desafío</h2>
+      {ranking && <h2 className="font-semibold">Ranking del desafío</h2>}
 
       {cerrado && (
         <motion.div
@@ -73,7 +77,10 @@ export function DesafioRanking({
           className="rounded-xl border bg-muted p-4"
         >
           {desafio.ganador_user_id === null ? (
-            <p className="font-medium">Desafío cerrado sin ganador</p>
+            <p className="font-medium">
+              Desafío cerrado sin ganador (se necesitan al menos 2 participantes
+              elegibles)
+            </p>
           ) : (
             <>
               <p className="flex items-center gap-2 font-medium">
@@ -91,7 +98,7 @@ export function DesafioRanking({
         </motion.div>
       )}
 
-      {ranking.length === 0 ? (
+      {ranking === null ? null : ranking.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           Nadie ha respondido este desafío todavía.
         </p>

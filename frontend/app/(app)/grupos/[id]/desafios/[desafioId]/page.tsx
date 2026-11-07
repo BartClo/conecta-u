@@ -10,13 +10,19 @@ import type {
   TestParaRendir,
 } from "@/lib/types";
 
-async function seccionRanking(desafioId: string) {
-  const [detalle, ranking, me] = await Promise.all([
+// El ranking solo se pide si ya rindio o el desafio esta cerrado (si no, el API da 403).
+async function seccionRanking(desafioId: string, rindio: boolean) {
+  const [detalle, me] = await Promise.all([
     apiFetchServerSafe<DesafioDetalle>(`/api/desafios/${desafioId}`),
-    apiFetchServer<RankingDesafioEntry[]>(`/api/desafios/${desafioId}/ranking`),
     apiFetchServer<{ id: string }>("/api/me"),
   ]);
   if (!detalle.data) return null;
+  const ranking =
+    rindio || detalle.data.estado === "cerrado"
+      ? await apiFetchServer<RankingDesafioEntry[]>(
+          `/api/desafios/${desafioId}/ranking`,
+        )
+      : null;
   return (
     <DesafioRanking desafio={detalle.data} ranking={ranking} userId={me.id} />
   );
@@ -38,7 +44,7 @@ export default async function DesafioPage({
   if (mio.data) {
     return (
       <ResultadoClient grupoId={id} miIntento={mio.data}>
-        {await seccionRanking(desafioId)}
+        {await seccionRanking(desafioId, true)}
       </ResultadoClient>
     );
   }
@@ -51,7 +57,10 @@ export default async function DesafioPage({
   }
   if (rendir.data) {
     return (
-      <RendirClient grupoId={id} desafioId={desafioId} test={rendir.data} />
+      <div className="space-y-6">
+        <RendirClient grupoId={id} desafioId={desafioId} test={rendir.data} />
+        {await seccionRanking(desafioId, false)}
+      </div>
     );
   }
 
@@ -62,7 +71,7 @@ export default async function DesafioPage({
           ? "Este desafío no está disponible"
           : "Desafío no encontrado"}
       </h1>
-      {rendir.status === 409 && (await seccionRanking(desafioId))}
+      {rendir.status === 409 && (await seccionRanking(desafioId, false))}
       <Link href={`/grupos/${id}/desafios`} className="underline">
         Volver a desafíos
       </Link>

@@ -7,6 +7,8 @@ import { puedeCerrar } from "../lib/desafios";
 import type { DesafioDetalle, RankingDesafioEntry } from "../lib/types";
 
 vi.mock("../lib/api-client", () => ({ apiFetchClient: vi.fn() }));
+const refresh = vi.fn();
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
 const api = apiFetchClient as ReturnType<typeof vi.fn>;
 
 const DESAFIO: DesafioDetalle = {
@@ -48,7 +50,7 @@ let client: QueryClient;
 function renderRanking(
   over: Partial<DesafioDetalle> = {},
   userId = "creador",
-  ranking = RANKING,
+  ranking: RankingDesafioEntry[] | null = RANKING,
 ) {
   return render(
     <QueryClientProvider client={client}>
@@ -60,11 +62,14 @@ function renderRanking(
     </QueryClientProvider>,
   );
 }
+const SIN_GANADOR =
+  "Desafío cerrado sin ganador (se necesitan al menos 2 participantes elegibles)";
 const boton = () =>
   screen.queryByRole("button", { name: /Cerrar desafío|Cerrando/ });
 
 beforeEach(() => {
   api.mockReset();
+  refresh.mockReset();
   client = new QueryClient();
   vi.stubGlobal("matchMedia", () => ({
     matches: false,
@@ -158,6 +163,7 @@ describe("DesafioRanking close button", () => {
       method: "POST",
     });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ["creditos"] });
+    expect(refresh).toHaveBeenCalledTimes(1);
     expect(boton()).toBeNull();
     // Winner comes from ganador_user_id, not from posicion === 1.
     const filas = screen.getAllByRole("row").slice(1);
@@ -195,7 +201,7 @@ describe("DesafioRanking states", () => {
 
   it("shows 'cerrado sin ganador' when closed with no winner", () => {
     renderRanking({ estado: "cerrado" });
-    expect(screen.getByText("Desafío cerrado sin ganador")).toBeInTheDocument();
+    expect(screen.getByText(SIN_GANADOR)).toBeInTheDocument();
   });
 
   it("shows the winner without prize text when none was credited", () => {
@@ -222,6 +228,16 @@ describe("DesafioRanking states", () => {
       removeEventListener: vi.fn(),
     }));
     renderRanking({ estado: "cerrado" });
-    expect(screen.getByText("Desafío cerrado sin ganador")).toBeInTheDocument();
+    expect(screen.getByText(SIN_GANADOR)).toBeInTheDocument();
+  });
+});
+
+describe("DesafioRanking sin tabla", () => {
+  it("ranking null shows only the close action, no table or heading", () => {
+    renderRanking({}, "creador", null);
+    expect(screen.queryByRole("table")).toBeNull();
+    expect(screen.queryByText("Ranking del desafío")).toBeNull();
+    expect(screen.queryByText(/Nadie ha respondido/)).toBeNull();
+    expect(boton()).toBeInTheDocument();
   });
 });

@@ -58,12 +58,49 @@ describe("DesafioPage state resolution", () => {
     );
   });
 
-  it("404 then 200 on rendir mounts the quiz", async () => {
+  it("404 then 200 on rendir mounts the quiz plus close action, without asking for ranking", async () => {
     safe
       .mockResolvedValueOnce({ status: 404, data: null })
-      .mockResolvedValueOnce({ status: 200, data: { id: "t1" } });
+      .mockResolvedValueOnce({ status: 200, data: { id: "t1" } })
+      .mockResolvedValueOnce({
+        status: 200,
+        data: { id: "d1", estado: "abierto" },
+      });
     await pagina();
     expect(screen.getByText("RENDIR")).toBeInTheDocument();
+    expect(screen.getByText("RANKING yo")).toBeInTheDocument();
+    expect(safe.mock.calls[2][0]).toBe("/api/desafios/d1");
+    expect(server.mock.calls.map((c) => c[0])).not.toContain(
+      "/api/desafios/d1/ranking",
+    );
+  });
+
+  it("409 with an open desafio never asks for ranking (403)", async () => {
+    safe
+      .mockResolvedValueOnce({ status: 404, data: null })
+      .mockResolvedValueOnce({ status: 409, data: null })
+      .mockResolvedValueOnce({
+        status: 200,
+        data: { id: "d1", estado: "abierto" },
+      });
+    await pagina();
+    expect(server.mock.calls.map((c) => c[0])).not.toContain(
+      "/api/desafios/d1/ranking",
+    );
+  });
+
+  it("409 with a closed desafio asks for ranking", async () => {
+    safe
+      .mockResolvedValueOnce({ status: 404, data: null })
+      .mockResolvedValueOnce({ status: 409, data: null })
+      .mockResolvedValueOnce({
+        status: 200,
+        data: { id: "d1", estado: "cerrado" },
+      });
+    await pagina();
+    expect(server.mock.calls.map((c) => c[0])).toContain(
+      "/api/desafios/d1/ranking",
+    );
   });
 
   it("404 then 409 shows the closed block", async () => {

@@ -47,7 +47,9 @@ export function Leaderboard({
             data-podio={i + 1}
             className={`flex w-28 flex-col items-center justify-end gap-1 rounded-xl border bg-card p-2 text-center ${ALTURA[i]}`}
           >
-            {i === 0 && <Trophy aria-hidden className="size-5" />}
+            {i === 0 && top[i].desafios_ganados > 0 && (
+              <Trophy aria-hidden className="size-5" />
+            )}
             <span
               aria-hidden
               className="flex size-8 items-center justify-center rounded-full bg-muted text-xs font-semibold"

@@ -13,7 +13,10 @@ function mockMatchMedia(initialMatches: boolean) {
   };
   vi.stubGlobal("matchMedia", vi.fn().mockReturnValue(mql));
   return {
-    fire: (matches: boolean) => listener?.({ matches } as MediaQueryListEvent),
+    fire: (matches: boolean) => {
+      mql.matches = matches;
+      listener?.({ matches } as MediaQueryListEvent);
+    },
   };
 }
 
@@ -40,5 +43,17 @@ describe("questionSlide", () => {
     expect(initial(-1).x).toBe(-24);
     expect(exit(1).x).toBe(-24);
     expect(exit(-1).x).toBe(24);
+  });
+});
+
+describe("useReducedMotionSafe hidratacion", () => {
+  it("renders false on the server snapshot even if the preference is reduce", async () => {
+    mockMatchMedia(true);
+    const { renderToString } = await import("react-dom/server");
+    const { createElement } = await import("react");
+    function Probe() {
+      return createElement("span", null, String(useReducedMotionSafe()));
+    }
+    expect(renderToString(createElement(Probe))).toContain("false");
   });
 });

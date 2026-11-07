@@ -1,21 +1,19 @@
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import type { Variants } from "framer-motion";
 
+const QUERY = "(prefers-reduced-motion: reduce)";
+
+// false en servidor y primer render de cliente (sin mismatch); la preferencia real llega tras montar.
 export function useReducedMotionSafe(): boolean {
-  const [reduced, setReduced] = useState(
-    () =>
-      typeof window !== "undefined" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+  return useSyncExternalStore(
+    (notify) => {
+      const query = window.matchMedia(QUERY);
+      query.addEventListener("change", notify);
+      return () => query.removeEventListener("change", notify);
+    },
+    () => window.matchMedia(QUERY).matches,
+    () => false,
   );
-
-  useEffect(() => {
-    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const listener = (e: MediaQueryListEvent) => setReduced(e.matches);
-    query.addEventListener("change", listener);
-    return () => query.removeEventListener("change", listener);
-  }, []);
-
-  return reduced;
 }
 
 export const pageTransition: Variants = {
