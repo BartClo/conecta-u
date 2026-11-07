@@ -246,7 +246,7 @@ describe("TestEditor", () => {
     click("Crear");
 
     expect(
-      await screen.findByText("API request failed: 500"),
+      await screen.findByText("Error del servidor. Intenta de nuevo."),
     ).toBeInTheDocument();
     expect(screen.getByLabelText("Título")).toHaveValue("T");
     expect(screen.getByRole("button", { name: "Crear" })).toBeEnabled();
@@ -396,4 +396,27 @@ describe("payload after removing items (field registration shifts)", () => {
       ).toEqual(["Z1", "Z2"]);
     },
   );
+});
+
+describe("length limits", () => {
+  it("shows Spanish messages for over-long title and option", async () => {
+    const onSubmit = setup();
+    type("Título", "t".repeat(151));
+    click("Agregar pregunta");
+    await screen.findByText("Pregunta 1");
+    type("Enunciado de la pregunta 1", "q");
+    type("Opción 1 de la pregunta 1", "o".repeat(501));
+    type("Opción 2 de la pregunta 1", "b");
+    fireEvent.click(radio("Marcar la opción 2 de la pregunta 1 como correcta"));
+
+    click("Guardar test");
+
+    expect(
+      await screen.findByText("El título no puede superar 150 caracteres"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("La opción no puede superar 500 caracteres"),
+    ).toBeInTheDocument();
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
 });

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { mensajeDeError } from "@/lib/api-error";
 import { staggerContainer } from "@/lib/motion";
 import type { Test, TestPayload } from "@/lib/types";
 import { PreguntaField } from "./pregunta-field";
@@ -16,7 +17,11 @@ import { PreguntaField } from "./pregunta-field";
 const MARCA = "Marca una opción correcta";
 
 const testSchema = z.object({
-  titulo: z.string().trim().min(1, "El título no puede estar vacío").max(150),
+  titulo: z
+    .string()
+    .trim()
+    .min(1, "El título no puede estar vacío")
+    .max(150, "El título no puede superar 150 caracteres"),
   descripcion: z.string(),
   preguntas: z
     .array(
@@ -32,7 +37,7 @@ const testSchema = z.object({
                 .string()
                 .trim()
                 .min(1, "La opción no puede estar vacía")
-                .max(500),
+                .max(500, "La opción no puede superar 500 caracteres"),
             }),
           )
           .min(2, "Agrega al menos 2 opciones"),
@@ -116,7 +121,7 @@ export function TestEditor({
         })),
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo guardar.");
+      setError(mensajeDeError(err, "No se pudo guardar."));
       setPending(false);
     }
   }

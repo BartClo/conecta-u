@@ -141,7 +141,7 @@ describe("TestDetalleClient", () => {
     fireEvent.click(screen.getByRole("button", { name: "Borrar" }));
 
     expect(
-      await screen.findByText("API request failed: 403"),
+      await screen.findByText("No tienes permiso para realizar esta acción."),
     ).toBeInTheDocument();
     expect(push).not.toHaveBeenCalled();
   });
@@ -252,7 +252,7 @@ describe("TestEditarClient", () => {
     fireEvent.click(screen.getByRole("button", { name: "Guardar test" }));
 
     expect(
-      await screen.findByText("API request failed: 500"),
+      await screen.findByText("Error del servidor. Intenta de nuevo."),
     ).toBeInTheDocument();
   });
 });
