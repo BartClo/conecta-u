@@ -13,3 +13,10 @@ export function mensajeDeError(err: unknown, fallback: string): string {
   if (!status) return err.message;
   return POR_STATUS[Number(status)] ?? "Error del servidor. Intenta de nuevo.";
 }
+
+/** HTTP status of an error thrown by the api clients, or null if it is not one. */
+export function statusDeError(err: unknown): number | null {
+  if (!(err instanceof Error)) return null;
+  const status = /^API request failed: (\d+)$/.exec(err.message)?.[1];
+  return status ? Number(status) : null;
+}

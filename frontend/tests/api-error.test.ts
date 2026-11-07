@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mensajeDeError } from "../lib/api-error";
+import { mensajeDeError, statusDeError } from "../lib/api-error";
 
 describe("mensajeDeError", () => {
   it.each([
@@ -20,5 +20,13 @@ describe("mensajeDeError", () => {
       "Mensaje propio",
     );
     expect(mensajeDeError("boom", "f")).toBe("f");
+  });
+});
+
+describe("statusDeError", () => {
+  it("extracts the status or returns null", () => {
+    expect(statusDeError(new Error("API request failed: 409"))).toBe(409);
+    expect(statusDeError(new Error("otra cosa"))).toBeNull();
+    expect(statusDeError("boom")).toBeNull();
   });
 });

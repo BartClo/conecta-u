@@ -47,3 +47,14 @@ export const modalVariants: Variants = {
   },
   exit: { opacity: 0, scale: 0.96, transition: { duration: 0.12 } },
 };
+
+// Horizontal slide between quiz questions; `custom` = 1 forward, -1 backward.
+export const questionSlide: Variants = {
+  initial: (direction: 1 | -1) => ({ opacity: 0, x: direction * 24 }),
+  animate: { opacity: 1, x: 0, transition: { duration: 0.2, ease: "easeOut" } },
+  exit: (direction: 1 | -1) => ({
+    opacity: 0,
+    x: direction * -24,
+    transition: { duration: 0.15 },
+  }),
+};

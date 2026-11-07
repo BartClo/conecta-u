@@ -1,6 +1,6 @@
 import { act, renderHook } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { useReducedMotionSafe } from "../lib/motion";
+import { questionSlide, useReducedMotionSafe } from "../lib/motion";
 
 function mockMatchMedia(initialMatches: boolean) {
   let listener: ((e: MediaQueryListEvent) => void) | undefined;
@@ -29,5 +29,16 @@ describe("useReducedMotionSafe", () => {
     });
 
     expect(result.current).toBe(true);
+  });
+});
+
+describe("questionSlide", () => {
+  it("enters from and exits towards opposite sides by direction", () => {
+    const initial = questionSlide.initial as (d: 1 | -1) => { x: number };
+    const exit = questionSlide.exit as (d: 1 | -1) => { x: number };
+    expect(initial(1).x).toBe(24);
+    expect(initial(-1).x).toBe(-24);
+    expect(exit(1).x).toBe(-24);
+    expect(exit(-1).x).toBe(24);
   });
 });

@@ -135,3 +135,61 @@ export interface MovimientosCreditoOut {
   offset: number;
   total: number;
 }
+
+export type EstadoDesafio = "abierto" | "cerrado";
+
+export interface DesafioOut {
+  id: string;
+  grupo_id: string;
+  test_id: string;
+  test_titulo: string;
+  creado_por: string;
+  fecha_inicio: string;
+  fecha_fin: string | null;
+  estado: EstadoDesafio;
+  ya_rindio: boolean;
+}
+
+// Served to RENDIR: the backend never includes es_correcta here.
+export interface OpcionParaRendir {
+  id: string;
+  texto: string;
+  orden: number;
+}
+
+export interface PreguntaParaRendir {
+  id: string;
+  enunciado: string;
+  orden: number;
+  opciones: OpcionParaRendir[];
+}
+
+export interface TestParaRendir {
+  id: string;
+  titulo: string;
+  preguntas: PreguntaParaRendir[];
+}
+
+export interface RespuestaIntentoInput {
+  pregunta_id: string;
+  opcion_id: string;
+}
+
+export interface IntentoOut {
+  id: string;
+  desafio_id: string;
+  user_id: string;
+  puntaje: number;
+  total: number;
+  segundos: number;
+  finalizado_at: string;
+}
+
+export interface ResultadoDesafioOut {
+  user_id: string;
+  user_nombre: string;
+  puntaje: number;
+  total: number;
+  segundos: number;
+  finalizado_at: string;
+}
