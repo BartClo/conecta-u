@@ -1,3 +1,4 @@
+import { readTestToken } from "./auth/test-session";
 import { createBrowserSupabaseClient } from "./supabase/client";
 
 interface ApiFetchOptions {
@@ -5,17 +6,22 @@ interface ApiFetchOptions {
   body?: unknown;
 }
 
-export async function apiFetchClient<T>(
-  path: string,
-  options: ApiFetchOptions = {},
-): Promise<T> {
+async function accessToken(): Promise<string | null> {
+  if (process.env.NEXT_PUBLIC_AUTH_MODE === "test") return readTestToken();
   const supabase = createBrowserSupabaseClient();
   const {
     data: { session },
   } = await supabase.auth.getSession();
+  return session?.access_token ?? null;
+}
 
-  const headers: Record<string, string> = session
-    ? { Authorization: `Bearer ${session.access_token}` }
+export async function apiFetchClient<T>(
+  path: string,
+  options: ApiFetchOptions = {},
+): Promise<T> {
+  const token = await accessToken();
+  const headers: Record<string, string> = token
+    ? { Authorization: `Bearer ${token}` }
     : {};
   if (options.body !== undefined) {
     headers["Content-Type"] = "application/json";

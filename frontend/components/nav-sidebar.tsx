@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { SaldoIndicator } from "@/components/creditos/saldo-indicator";
 import { Button } from "@/components/ui/button";
+import { clearTestSession } from "@/lib/auth/test-session";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
 const PROXIMAMENTE_ITEMS = ["Perfil"];
@@ -17,8 +18,12 @@ export function NavSidebar({ userName, userEmail }: NavSidebarProps) {
   const router = useRouter();
 
   async function handleSignOut() {
-    const supabase = createBrowserSupabaseClient();
-    await supabase.auth.signOut();
+    if (process.env.NEXT_PUBLIC_AUTH_MODE === "test") {
+      clearTestSession();
+    } else {
+      const supabase = createBrowserSupabaseClient();
+      await supabase.auth.signOut();
+    }
     router.push("/login");
   }
 

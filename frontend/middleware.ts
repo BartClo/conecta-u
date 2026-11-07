@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { TEST_COOKIE } from "./lib/auth/test-session";
 
 const PROTECTED_PREFIXES = [
   "/dashboard",
@@ -13,6 +14,17 @@ const PROTECTED_PREFIXES = [
 ];
 
 export async function middleware(request: NextRequest) {
+  // Valor fijado en build (next.config): un build normal elimina esta rama y
+  // una cookie forjada no cambia nada. El backend valida el token igualmente.
+  if (process.env.NEXT_PUBLIC_AUTH_MODE === "test") {
+    const protegida = PROTECTED_PREFIXES.some((prefix) =>
+      request.nextUrl.pathname.startsWith(prefix),
+    );
+    return protegida && !request.cookies.has(TEST_COOKIE)
+      ? NextResponse.redirect(new URL("/login", request.url))
+      : NextResponse.next({ request });
+  }
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
