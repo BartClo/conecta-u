@@ -5,7 +5,18 @@ from sqlalchemy import engine_from_config, pool
 from alembic import context
 from app.core.config import get_settings
 from app.core.database import Base
-from app.models import user  # noqa: F401  (registers User on Base.metadata)
+from app.models import (  # noqa: F401  (registran todos los modelos en Base.metadata)
+    credito,
+    curso,
+    desafio,
+    evento,
+    grupo,
+    materia,
+    membresia,
+    semestre,
+    test,
+    user,
+)
 
 config = context.config
 config.set_main_option("sqlalchemy.url", get_settings().database_url)

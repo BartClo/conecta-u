@@ -1,5 +1,6 @@
 from datetime import UTC, datetime
 
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -46,6 +47,10 @@ class DesafioNoDisponible(Exception):
     pass
 
 
+class DebesRendirPrimero(Exception):
+    pass
+
+
 class YaRindio(Exception):
     pass
 
@@ -75,6 +80,15 @@ def _exigir_disponible(desafio: Desafio, ahora: datetime) -> None:
     fin = aware_utc(desafio.fecha_fin) if desafio.fecha_fin else None
     if desafio.estado != ESTADO_ABIERTO or ahora < inicio or (fin is not None and ahora > fin):
         raise DesafioNoDisponible()
+
+
+def _exigir_haber_rendido(db: Session, desafio: Desafio, user_id: str) -> None:
+    """Con el desafio abierto, ver resultados exige haber rendido (no spoilers)."""
+    if (
+        desafio.estado == ESTADO_ABIERTO
+        and repo.get_intento(db, desafio_id=desafio.id, user_id=user_id) is None
+    ):
+        raise DebesRendirPrimero()
 
 
 def _exigir_puede_rendir(db: Session, desafio: Desafio, user_id: str) -> None:
@@ -149,6 +163,14 @@ def rendir(
     _exigir_puede_rendir(db, desafio, user_id)
     test = repo.get_test_completo(db, desafio.test_id)
     puntaje = _puntuar(test, respuestas)
+    # Relee con lock compartido: un cierre concurrente (FOR UPDATE) espera y aqui ya lo vemos.
+    desafio = db.scalar(
+        select(Desafio)
+        .where(Desafio.id == desafio_id)
+        .with_for_update(read=True)
+        .execution_options(populate_existing=True)
+    )
+    _exigir_disponible(desafio, datetime.now(UTC))
     intento = Intento(
         desafio_id=desafio_id,
         user_id=user_id,
@@ -177,7 +199,8 @@ def mi_intento(db: Session, *, user_id: str, desafio_id: str) -> Intento:
 
 
 def resultados(db: Session, *, user_id: str, desafio_id: str) -> list[tuple[Intento, User]]:
-    _desafio_de_miembro(db, desafio_id, user_id)
+    desafio = _desafio_de_miembro(db, desafio_id, user_id)
+    _exigir_haber_rendido(db, desafio, user_id)
     return repo.list_resultados(db, desafio_id)
 
 
@@ -202,6 +225,7 @@ def detalle(db: Session, *, user_id: str, desafio_id: str) -> tuple[Desafio, str
 
 def ranking(db: Session, *, user_id: str, desafio_id: str) -> list[tuple[Intento, User, bool]]:
     desafio = _desafio_de_miembro(db, desafio_id, user_id)
+    _exigir_haber_rendido(db, desafio, user_id)
     autor_id = repo.get_test(db, desafio.test_id).autor_id
     return repo.list_ranking(
         db, desafio_id=desafio.id, grupo_id=desafio.grupo_id, autor_id=autor_id
@@ -223,7 +247,8 @@ def cerrar(db: Session, *, user_id: str, desafio_id: str) -> tuple[Desafio, str 
         filas = repo.list_ranking(
             db, desafio_id=desafio.id, grupo_id=desafio.grupo_id, autor_id=autor_id
         )
-        ganador = next((i for i, _, elegible in filas if elegible), None)
+        elegibles = [i for i, _, elegible in filas if elegible]
+        ganador = elegibles[0] if len(elegibles) >= economia.MIN_PARTICIPANTES_PREMIO else None
         desafio.estado = ESTADO_CERRADO
         if ganador is not None:
             desafio.ganador_user_id = ganador.user_id

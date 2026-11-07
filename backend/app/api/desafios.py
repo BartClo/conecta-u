@@ -44,6 +44,8 @@ def _http_errors() -> Iterator[None]:
         raise HTTPException(
             status_code=409, detail="El test no es de la materia de este grupo"
         ) from exc
+    except svc.DebesRendirPrimero as exc:
+        raise HTTPException(status_code=403, detail="debes_rendir_primero") from exc
     except svc.YaRindio as exc:
         raise HTTPException(status_code=409, detail="ya_rindio") from exc
     except svc.DesafioNoDisponible as exc:

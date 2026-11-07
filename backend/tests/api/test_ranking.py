@@ -106,9 +106,9 @@ def test_empate_total_gana_menor_id():
         for i, uid in (("00-a", "caro"), ("99-z", "beto")):
             db.query(Intento).filter(Intento.user_id == uid).update({**fijo, "id": i})
         db.commit()
-    _como("ana")
     ranking = client.get(f"/api/desafios/{d['id']}/ranking").json()
     assert [e["user_id"] for e in ranking] == ["caro", "beto"]
+    _como("ana")
     assert _cerrar(d).json()["ganador_user_id"] == "caro"
 
 
@@ -121,10 +121,13 @@ def test_autor_del_test_no_gana_pero_aparece_en_ranking():
     _rendir(d, test, [SI, SI], segundos=1)  # ana: mejor intento
     _como("beto")
     _rendir(d, test, [SI, NO])
+    _como("caro")
+    _rendir(d, test, [NO, NO])
     ranking = client.get(f"/api/desafios/{d['id']}/ranking").json()
     assert [(e["user_id"], e["posicion"], e["elegible"]) for e in ranking] == [
         ("ana", 1, False),
         ("beto", 2, True),
+        ("caro", 3, True),
     ]
     assert ranking[0]["nombre"] == "Ana"
     _como("ana")
@@ -140,10 +143,19 @@ def test_expulsado_no_gana():
     _rendir(d, test, [SI, SI])
     _como("caro")
     _rendir(d, test, [SI, NO])
+    _como("intruso")
+    client.post("/api/grupos/unirse", json={"codigo": grupo["codigo_invitacion"]})
+    _rendir(d, test, [NO, NO])
     _como("ana")
     assert client.delete(f"/api/grupos/{grupo['id']}/miembros/beto").status_code == 204
+    _como("caro")
     ranking = client.get(f"/api/desafios/{d['id']}/ranking").json()
-    assert [(e["user_id"], e["elegible"]) for e in ranking] == [("beto", False), ("caro", True)]
+    assert [(e["user_id"], e["elegible"]) for e in ranking] == [
+        ("beto", False),
+        ("caro", True),
+        ("intruso", True),
+    ]
+    _como("ana")
     assert _cerrar(d).json()["ganador_user_id"] == "caro"
 
 
@@ -162,8 +174,8 @@ def test_sin_elegibles_cierra_sin_ganador_ni_premio():
 def test_sin_intentos_cierra_y_ranking_vacio():
     _, grupo, test = _escenario()
     d = _desafio(grupo, test)
-    assert client.get(f"/api/desafios/{d['id']}/ranking").json() == []
     assert _cerrar(d).json()["premio_creditos"] == 0
+    assert client.get(f"/api/desafios/{d['id']}/ranking").json() == []
 
 
 # --- quien cierra ---
@@ -199,6 +211,8 @@ def test_fallo_al_acreditar_deja_el_desafio_abierto(monkeypatch):
     d = _desafio(grupo, test)
     _como("beto")
     _rendir(d, test, [SI, SI])
+    _como("caro")
+    _rendir(d, test, [SI, NO])
     _como("ana")
 
     def boom(*a, **k):
@@ -227,6 +241,8 @@ def test_detalle_del_desafio_solo_miembros():
     assert (r["ganador_user_id"], r["premio_creditos"], r["test_titulo"]) == (None, 0, "Parcial")
     _como("beto")
     _rendir(d, test, [SI, SI])
+    _como("caro")
+    _rendir(d, test, [SI, NO])
     _como("ana")
     _cerrar(d)
     r = client.get(f"/api/desafios/{d['id']}").json()
@@ -327,3 +343,56 @@ def test_ranking_materia_agrega_grupos_sin_email():
     otra = client.post("/api/materias", json={"nombre": "Química"}).json()
     assert client.get(f"/api/materias/{otra['id']}/ranking").json() == []
     assert client.get("/api/materias/nope/ranking").status_code == 404
+
+
+# --- farmeo en solitario y visibilidad ---
+
+
+def test_un_solo_elegible_no_gana_ni_cobra_premio():
+    _, grupo, test = _escenario()
+    d = _desafio(grupo, test)
+    _como("beto")
+    _rendir(d, test, [SI, SI])
+    saldo = _saldo("beto")
+    _como("ana")
+    r = _cerrar(d).json()
+    assert r["estado"] == "cerrado"
+    assert (r["ganador_user_id"], r["premio_acreditado"], r["premio_creditos"]) == (None, False, 0)
+    assert _saldo("beto") == saldo
+    assert _movs_premio() == 0
+
+
+def test_ranking_y_resultados_abiertos_exigen_haber_rendido():
+    _, grupo, test = _escenario()
+    d = _desafio(grupo, test)
+    _como("beto")
+    for ruta in ("ranking", "resultados"):
+        r = client.get(f"/api/desafios/{d['id']}/{ruta}")
+        assert (r.status_code, r.json()["detail"]) == (403, "debes_rendir_primero")
+    _rendir(d, test, [SI, SI])
+    for ruta in ("ranking", "resultados"):
+        assert client.get(f"/api/desafios/{d['id']}/{ruta}").status_code == 200
+    _como("caro")  # no rindio, desafio abierto
+    assert client.get(f"/api/desafios/{d['id']}/ranking").status_code == 403
+    _como("ana")
+    _cerrar(d)
+    _como("caro")  # cerrado: cualquier miembro
+    for ruta in ("ranking", "resultados"):
+        assert client.get(f"/api/desafios/{d['id']}/{ruta}").status_code == 200
+
+
+def test_rendir_revalida_disponibilidad_bajo_lock(monkeypatch):
+    _, grupo, test = _escenario()
+    d = _desafio(grupo, test)
+    _como("beto")
+    from app.services import desafio_service as svc
+
+    original = svc._puntuar
+
+    def cierra_en_medio(t, resp):  # un cierre concurrente entre el chequeo y el INSERT
+        _set_estado(d["id"], estado="cerrado")
+        return original(t, resp)
+
+    monkeypatch.setattr(svc, "_puntuar", cierra_en_medio)
+    r = _rendir(d, test, [SI, SI])
+    assert (r.status_code, r.json()["detail"]) == (409, "desafio_no_disponible")
