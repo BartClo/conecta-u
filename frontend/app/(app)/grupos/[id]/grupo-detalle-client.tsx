@@ -96,6 +96,8 @@ export function GrupoDetalleClient({
         `/api/grupos/${grupo.id}`,
       );
       setGrupo((prev) => ({ ...prev, ...fresco }));
+      // El ranking viene del servidor y tambien excluye al expulsado.
+      router.refresh();
     });
   }
 

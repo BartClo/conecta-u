@@ -12,7 +12,8 @@ import type { GrupoDetalle, Miembro } from "../lib/types";
 
 vi.mock("../lib/api-client", () => ({ apiFetchClient: vi.fn() }));
 const push = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
+const refresh = vi.fn();
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push, refresh }) }));
 const api = apiFetchClient as ReturnType<typeof vi.fn>;
 
 const GRUPO: GrupoDetalle = {
@@ -42,6 +43,7 @@ beforeEach(() => {
   }));
   api.mockReset();
   push.mockReset();
+  refresh.mockReset();
 });
 
 afterEach(() => {
@@ -178,6 +180,8 @@ describe("GrupoDetalleClient as owner", () => {
 
     expect(await screen.findByText("NEW999")).toBeInTheDocument();
     expect(api).toHaveBeenCalledWith("/api/grupos/g1");
+    // Regresion: el ranking viene del servidor y no debe seguir mostrando al expulsado.
+    await waitFor(() => expect(refresh).toHaveBeenCalled());
   });
 
   it("treats a 404 when expelling as success", async () => {
