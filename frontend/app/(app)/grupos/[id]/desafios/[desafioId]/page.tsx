@@ -1,12 +1,26 @@
 import Link from "next/link";
 import { RendirClient } from "./rendir-client";
 import { ResultadoClient } from "./resultado-client";
+import { DesafioRanking } from "@/components/desafios/desafio-ranking";
 import { apiFetchServer, apiFetchServerSafe } from "@/lib/api-server";
 import type {
+  DesafioDetalle,
   IntentoOut,
-  ResultadoDesafioOut,
+  RankingDesafioEntry,
   TestParaRendir,
 } from "@/lib/types";
+
+async function seccionRanking(desafioId: string) {
+  const [detalle, ranking, me] = await Promise.all([
+    apiFetchServerSafe<DesafioDetalle>(`/api/desafios/${desafioId}`),
+    apiFetchServer<RankingDesafioEntry[]>(`/api/desafios/${desafioId}/ranking`),
+    apiFetchServer<{ id: string }>("/api/me"),
+  ]);
+  if (!detalle.data) return null;
+  return (
+    <DesafioRanking desafio={detalle.data} ranking={ranking} userId={me.id} />
+  );
+}
 
 export default async function DesafioPage({
   params,
@@ -22,15 +36,10 @@ export default async function DesafioPage({
     throw new Error(`API request failed: ${mio.status}`);
   }
   if (mio.data) {
-    const resultados = await apiFetchServer<ResultadoDesafioOut[]>(
-      `/api/desafios/${desafioId}/resultados`,
-    );
     return (
-      <ResultadoClient
-        grupoId={id}
-        miIntento={mio.data}
-        resultados={resultados}
-      />
+      <ResultadoClient grupoId={id} miIntento={mio.data}>
+        {await seccionRanking(desafioId)}
+      </ResultadoClient>
     );
   }
 
@@ -47,12 +56,13 @@ export default async function DesafioPage({
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-4">
       <h1 className="text-xl font-semibold">
         {rendir.status === 409
           ? "Este desafío no está disponible"
           : "Desafío no encontrado"}
       </h1>
+      {rendir.status === 409 && (await seccionRanking(desafioId))}
       <Link href={`/grupos/${id}/desafios`} className="underline">
         Volver a desafíos
       </Link>

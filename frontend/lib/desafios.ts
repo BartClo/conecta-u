@@ -1,4 +1,4 @@
-import type { DesafioOut } from "./types";
+import type { DesafioDetalle, DesafioOut } from "./types";
 
 /** mm:ss for a duration in whole seconds. */
 export function formatoTiempo(segundos: number): string {
@@ -13,5 +13,23 @@ export function puedeRendirse(d: DesafioOut, ahora = Date.now()): boolean {
     d.estado === "abierto" &&
     ahora >= new Date(d.fecha_inicio).getTime() &&
     (d.fecha_fin === null || ahora <= new Date(d.fecha_fin).getTime())
+  );
+}
+
+/**
+ * Who sees "Cerrar desafio": creator or group owner any time; any member once
+ * `fecha_fin` has passed. `conReloj` is false before mount (clock-dependent,
+ * so the server render and first client render agree).
+ */
+export function puedeCerrar(
+  d: Pick<DesafioDetalle, "estado" | "creado_por" | "owner_id" | "fecha_fin">,
+  userId: string,
+  conReloj: boolean,
+  ahora = Date.now(),
+): boolean {
+  if (d.estado !== "abierto") return false;
+  if (userId === d.creado_por || userId === d.owner_id) return true;
+  return (
+    conReloj && d.fecha_fin !== null && ahora > new Date(d.fecha_fin).getTime()
   );
 }

@@ -35,6 +35,11 @@ function confirmWith(answer: boolean) {
 }
 
 beforeEach(() => {
+  vi.stubGlobal("matchMedia", () => ({
+    matches: true,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  }));
   api.mockReset();
   push.mockReset();
 });
@@ -47,7 +52,12 @@ afterEach(() => {
 describe("GrupoDetalleClient as owner", () => {
   function renderOwner() {
     return render(
-      <GrupoDetalleClient grupo={GRUPO} miembros={MIEMBROS} userId="u1" />,
+      <GrupoDetalleClient
+        grupo={GRUPO}
+        miembros={MIEMBROS}
+        leaderboard={[]}
+        userId="u1"
+      />,
     );
   }
 
@@ -254,12 +264,38 @@ describe("GrupoDetalleClient as owner", () => {
   });
 });
 
+describe("GrupoDetalleClient leaderboard", () => {
+  it("renders the group ranking from the initial entries", () => {
+    render(
+      <GrupoDetalleClient
+        grupo={GRUPO}
+        miembros={MIEMBROS}
+        leaderboard={[
+          {
+            user_id: "u1",
+            nombre: "Ana",
+            desafios_ganados: 2,
+            suma_puntajes: 9,
+            posicion: 1,
+          },
+        ]}
+        userId="u1"
+      />,
+    );
+    expect(screen.getByText("Ranking del grupo")).toBeInTheDocument();
+    expect(
+      screen.getByText("2 ganados · 9 pts", { exact: false }),
+    ).toBeInTheDocument();
+  });
+});
+
 describe("GrupoDetalleClient as member", () => {
   function renderMember() {
     return render(
       <GrupoDetalleClient
         grupo={{ ...GRUPO, rol: "member" }}
         miembros={MIEMBROS}
+        leaderboard={[]}
         userId="u2"
       />,
     );

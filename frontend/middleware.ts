@@ -8,6 +8,7 @@ const PROTECTED_PREFIXES = [
   "/grupos",
   "/materias",
   "/creditos",
+  "/ranking",
 ];
 
 export async function middleware(request: NextRequest) {
@@ -55,5 +56,6 @@ export const config = {
     "/grupos/:path*",
     "/materias/:path*",
     "/creditos/:path*",
+    "/ranking/:path*",
   ],
 };

@@ -40,6 +40,11 @@ export function NavSidebar({ userName, userEmail }: NavSidebarProps) {
             Grupos
           </Link>
         </li>
+        <li>
+          <Link href="/ranking" className="font-medium hover:text-primary">
+            Ranking
+          </Link>
+        </li>
         <li className="flex items-center justify-between">
           <Link href="/creditos" className="font-medium hover:text-primary">
             Créditos

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { motion } from "framer-motion";
 import { Trophy } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
@@ -11,7 +12,9 @@ import type { IntentoOut, ResultadoDesafioOut } from "@/lib/types";
 interface ResultadoClientProps {
   grupoId: string;
   miIntento: IntentoOut;
-  resultados: ResultadoDesafioOut[];
+  // Table shown right after submitting; the desafio page passes `children` instead.
+  resultados?: ResultadoDesafioOut[];
+  children?: ReactNode;
   // Only true right after submitting in this session.
   recienRendido?: boolean;
 }
@@ -20,6 +23,7 @@ export function ResultadoClient({
   grupoId,
   miIntento,
   resultados,
+  children,
   recienRendido = false,
 }: ResultadoClientProps) {
   const perfecto = miIntento.puntaje === miIntento.total;
@@ -45,42 +49,46 @@ export function ResultadoClient({
         )}
       </motion.div>
 
-      <div className="space-y-2">
-        <h2 className="font-semibold">Resultados del desafío</h2>
-        <motion.table
-          variants={staggerContainer}
-          initial="initial"
-          animate="animate"
-          className="w-full text-left text-sm"
-        >
-          <thead>
-            <tr>
-              <th className="p-2">Usuario</th>
-              <th className="p-2">Puntaje</th>
-              <th className="p-2">Tiempo</th>
-            </tr>
-          </thead>
-          <tbody>
-            {resultados.map((r) => {
-              const mia = r.user_id === miIntento.user_id;
-              return (
-                <motion.tr
-                  key={r.user_id}
-                  variants={staggerItem}
-                  data-mia={mia}
-                  className={mia ? "bg-muted font-semibold" : undefined}
-                >
-                  <td className="p-2">{r.user_nombre}</td>
-                  <td className="p-2">
-                    {r.puntaje} / {r.total}
-                  </td>
-                  <td className="p-2">{formatoTiempo(r.segundos)}</td>
-                </motion.tr>
-              );
-            })}
-          </tbody>
-        </motion.table>
-      </div>
+      {resultados && (
+        <div className="space-y-2">
+          <h2 className="font-semibold">Resultados del desafío</h2>
+          <motion.table
+            variants={staggerContainer}
+            initial="initial"
+            animate="animate"
+            className="w-full text-left text-sm"
+          >
+            <thead>
+              <tr>
+                <th className="p-2">Usuario</th>
+                <th className="p-2">Puntaje</th>
+                <th className="p-2">Tiempo</th>
+              </tr>
+            </thead>
+            <tbody>
+              {resultados.map((r) => {
+                const mia = r.user_id === miIntento.user_id;
+                return (
+                  <motion.tr
+                    key={r.user_id}
+                    variants={staggerItem}
+                    data-mia={mia}
+                    className={mia ? "bg-muted font-semibold" : undefined}
+                  >
+                    <td className="p-2">{r.user_nombre}</td>
+                    <td className="p-2">
+                      {r.puntaje} / {r.total}
+                    </td>
+                    <td className="p-2">{formatoTiempo(r.segundos)}</td>
+                  </motion.tr>
+                );
+              })}
+            </tbody>
+          </motion.table>
+        </div>
+      )}
+
+      {children}
 
       <Link
         href={`/grupos/${grupoId}/desafios`}

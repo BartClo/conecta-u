@@ -42,6 +42,10 @@ describe("NavSidebar", () => {
       "href",
       "/cursos",
     );
+    expect(screen.getByRole("link", { name: "Ranking" })).toHaveAttribute(
+      "href",
+      "/ranking",
+    );
     expect(screen.getByRole("link", { name: "Calendario" })).toHaveAttribute(
       "href",
       "/calendario",

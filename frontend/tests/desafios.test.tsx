@@ -321,6 +321,16 @@ describe("ResultadoClient", () => {
     ).toHaveAttribute("href", "/grupos/g1/desafios");
   });
 
+  it("without resultados renders no table and shows its children", () => {
+    render(
+      <ResultadoClient grupoId="g1" miIntento={INTENTO}>
+        <p>EXTRA</p>
+      </ResultadoClient>,
+    );
+    expect(screen.queryByRole("table")).toBeNull();
+    expect(screen.getByText("EXTRA")).toBeInTheDocument();
+  });
+
   it("celebrates only when just played with a perfect score", () => {
     const perfecto = { ...INTENTO, puntaje: 2 };
     const { rerender } = render(

@@ -193,3 +193,50 @@ export interface ResultadoDesafioOut {
   segundos: number;
   finalizado_at: string;
 }
+
+// GET /api/desafios/{id}: what the desafio view needs to decide who can close.
+export interface DesafioDetalle {
+  id: string;
+  grupo_id: string;
+  test_titulo: string;
+  creado_por: string;
+  owner_id: string;
+  estado: EstadoDesafio;
+  fecha_inicio: string;
+  fecha_fin: string | null;
+  ganador_user_id: string | null;
+  ganador_nombre: string | null;
+  premio_acreditado: boolean;
+  premio_creditos: number;
+}
+
+// POST /api/desafios/{id}/cerrar
+export interface DesafioCerrado {
+  id: string;
+  estado: EstadoDesafio;
+  ganador_user_id: string | null;
+  ganador_nombre: string | null;
+  premio_acreditado: boolean;
+  premio_creditos: number;
+}
+
+// `posicion` follows the ranking order over ALL attempts; the winner comes
+// from DesafioDetalle.ganador_user_id, since author/expelled users are not elegible.
+export interface RankingDesafioEntry {
+  user_id: string;
+  nombre: string;
+  puntaje: number;
+  total: number;
+  segundos: number;
+  posicion: number;
+  elegible: boolean;
+}
+
+// Group leaderboard and materia ranking share this shape.
+export interface LeaderboardEntry {
+  user_id: string;
+  nombre: string;
+  desafios_ganados: number;
+  suma_puntajes: number;
+  posicion: number;
+}

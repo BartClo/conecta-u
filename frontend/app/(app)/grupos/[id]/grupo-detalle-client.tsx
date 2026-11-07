@@ -4,19 +4,27 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { GrupoFormModal } from "@/components/grupos/grupo-form-modal";
+import { Leaderboard } from "@/components/ranking/leaderboard";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { apiFetchClient } from "@/lib/api-client";
-import type { Grupo, GrupoDetalle, Miembro } from "@/lib/types";
+import type {
+  Grupo,
+  GrupoDetalle,
+  LeaderboardEntry,
+  Miembro,
+} from "@/lib/types";
 
 interface GrupoDetalleClientProps {
   grupo: GrupoDetalle;
   miembros: Miembro[];
+  leaderboard: LeaderboardEntry[];
   userId: string;
 }
 
 export function GrupoDetalleClient({
   grupo: initialGrupo,
   miembros: initialMiembros,
+  leaderboard,
   userId,
 }: GrupoDetalleClientProps) {
   const router = useRouter();
@@ -193,6 +201,14 @@ export function GrupoDetalleClient({
             </li>
           ))}
         </ul>
+      </div>
+
+      <div className="space-y-2">
+        <h2 className="font-semibold">Ranking del grupo</h2>
+        <Leaderboard
+          entries={leaderboard}
+          vacio="Todavía no hay resultados en este grupo."
+        />
       </div>
 
       {error && <p className="text-sm text-destructive">{error}</p>}

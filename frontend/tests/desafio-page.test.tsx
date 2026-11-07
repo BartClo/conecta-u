@@ -10,9 +10,19 @@ vi.mock("../lib/api-server", () => ({
 vi.mock(
   "../app/(app)/grupos/[id]/desafios/[desafioId]/resultado-client",
   () => ({
-    ResultadoClient: () => <div>RESULTADO</div>,
+    ResultadoClient: ({ children }: { children?: React.ReactNode }) => (
+      <div>
+        RESULTADO
+        {children}
+      </div>
+    ),
   }),
 );
+vi.mock("../components/desafios/desafio-ranking", () => ({
+  DesafioRanking: ({ userId }: { userId: string }) => (
+    <div>RANKING {userId}</div>
+  ),
+}));
 vi.mock("../app/(app)/grupos/[id]/desafios/[desafioId]/rendir-client", () => ({
   RendirClient: () => <div>RENDIR</div>,
 }));
@@ -29,15 +39,23 @@ async function pagina() {
 beforeEach(() => {
   safe.mockReset();
   server.mockReset();
+  server.mockImplementation(async (path: string) =>
+    path === "/api/me" ? { id: "yo" } : [],
+  );
 });
 
 describe("DesafioPage state resolution", () => {
   it("200 on intentos/me mounts the result", async () => {
-    safe.mockResolvedValueOnce({ status: 200, data: { id: "i1" } });
-    server.mockResolvedValueOnce([]);
+    safe
+      .mockResolvedValueOnce({ status: 200, data: { id: "i1" } })
+      .mockResolvedValueOnce({ status: 200, data: { id: "d1" } });
     await pagina();
-    expect(screen.getByText("RESULTADO")).toBeInTheDocument();
-    expect(safe).toHaveBeenCalledTimes(1);
+    expect(screen.getByText(/RESULTADO/)).toBeInTheDocument();
+    expect(screen.getByText("RANKING yo")).toBeInTheDocument();
+    expect(safe.mock.calls[1][0]).toBe("/api/desafios/d1");
+    expect(server.mock.calls.map((c) => c[0])).toContain(
+      "/api/desafios/d1/ranking",
+    );
   });
 
   it("404 then 200 on rendir mounts the quiz", async () => {
@@ -51,15 +69,26 @@ describe("DesafioPage state resolution", () => {
   it("404 then 409 shows the closed block", async () => {
     safe
       .mockResolvedValueOnce({ status: 404, data: null })
-      .mockResolvedValueOnce({ status: 409, data: null });
+      .mockResolvedValueOnce({ status: 409, data: null })
+      .mockResolvedValueOnce({ status: 200, data: { id: "d1" } });
     await pagina();
     expect(
       screen.getByText("Este desafío no está disponible"),
     ).toBeInTheDocument();
+    expect(screen.getByText("RANKING yo")).toBeInTheDocument();
     expect(screen.getByRole("link")).toHaveAttribute(
       "href",
       "/grupos/g1/desafios",
     );
+  });
+
+  it("omits the ranking section when the detail is not readable", async () => {
+    safe
+      .mockResolvedValueOnce({ status: 404, data: null })
+      .mockResolvedValueOnce({ status: 409, data: null })
+      .mockResolvedValueOnce({ status: 404, data: null });
+    await pagina();
+    expect(screen.queryByText(/RANKING/)).toBeNull();
   });
 
   it("throws on an unexpected status from intentos/me", async () => {
