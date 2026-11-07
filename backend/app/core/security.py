@@ -5,6 +5,9 @@ from fastapi import Header, HTTPException
 
 from app.core.config import get_settings
 
+TEST_JWT_ISSUER = "conecta-u-e2e"
+TEST_JWT_AUDIENCE = "conecta-u-e2e"
+
 
 class TokenPayload(TypedDict):
     sub: str
@@ -23,8 +26,17 @@ def _get_jwks_client() -> jwt.PyJWKClient:
 
 
 def _decode(token: str) -> dict:
-    signing_key = _get_jwks_client().get_signing_key_from_jwt(token)
     settings = get_settings()
+    if settings.auth_mode == "test":  # Settings impide este modo fuera de APP_ENV test/local.
+        return jwt.decode(
+            token,
+            settings.test_auth_secret,
+            algorithms=["HS256"],
+            audience=TEST_JWT_AUDIENCE,
+            issuer=TEST_JWT_ISSUER,
+            options={"require": ["exp", "iss", "aud", "sub", "email"]},
+        )
+    signing_key = _get_jwks_client().get_signing_key_from_jwt(token)
     return jwt.decode(
         token,
         signing_key.key,

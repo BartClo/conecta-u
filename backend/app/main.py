@@ -11,27 +11,44 @@ from app.api.materias import router as materias_router
 from app.api.me import router as me_router
 from app.api.semestres import router as semestres_router
 from app.api.tests import router as tests_router
-
-app = FastAPI(title="Conecta-U API")
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:5174", "http://localhost:3000"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-app.include_router(me_router, prefix="/api")
-app.include_router(semestres_router, prefix="/api")
-app.include_router(cursos_router, prefix="/api")
-app.include_router(eventos_router, prefix="/api")
-app.include_router(materias_router, prefix="/api")
-app.include_router(grupos_router, prefix="/api")
-app.include_router(tests_router, prefix="/api")
-app.include_router(creditos_router, prefix="/api")
-app.include_router(desafios_router, prefix="/api")
-app.include_router(ia_router, prefix="/api")
+from app.core.config import Settings, get_settings
 
 
-@app.get("/health")
-def health() -> dict[str, str]:
-    return {"status": "ok"}
+def create_app(settings: Settings | None = None) -> FastAPI:
+    settings = settings or get_settings()
+    app = FastAPI(title="Conecta-U API")
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_origins_list,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    for router in (
+        me_router,
+        semestres_router,
+        cursos_router,
+        eventos_router,
+        materias_router,
+        grupos_router,
+        tests_router,
+        creditos_router,
+        desafios_router,
+        ia_router,
+    ):
+        app.include_router(router, prefix="/api")
+
+    if settings.auth_mode == "test":
+        # Import y montaje condicionales: fuera de modo test la ruta no existe.
+        from app.api.test_auth import router as test_auth_router
+
+        app.include_router(test_auth_router, prefix="/api")
+
+    @app.get("/health")
+    def health() -> dict[str, str]:
+        return {"status": "ok"}
+
+    return app
+
+
+app = create_app()
