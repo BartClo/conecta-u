@@ -1,3 +1,5 @@
+from functools import lru_cache
+
 import anthropic
 
 from app.core.config import get_settings
@@ -16,11 +18,16 @@ class _SinConfigurar(LLMProvider):
         raise LLMProviderError("IA no configurada")
 
 
+@lru_cache(maxsize=4)
+def _cliente(api_key: str) -> anthropic.Anthropic:
+    return anthropic.Anthropic(api_key=api_key)
+
+
 def get_llm_provider() -> LLMProvider:
     """Dependency de FastAPI; los tests la sobreescriben."""
     s = get_settings()
     if s.llm_provider == "fake":
         return FakeLLMProvider()
     if s.llm_provider == "claude" and s.anthropic_api_key:
-        return ClaudeProvider(anthropic.Anthropic(api_key=s.anthropic_api_key), s.anthropic_model)
+        return ClaudeProvider(_cliente(s.anthropic_api_key), s.anthropic_model)
     return _SinConfigurar()

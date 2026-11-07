@@ -5,6 +5,7 @@ from unittest.mock import MagicMock
 import anthropic
 import httpx2 as httpx
 import pytest
+from anthropic.types import Message, TextBlock, Usage
 
 from app.core.config import Settings
 from app.services.ia import factory
@@ -20,7 +21,22 @@ OK = {
 
 
 def _resp(text, stop="end_turn"):
-    return SimpleNamespace(stop_reason=stop, content=[SimpleNamespace(type="text", text=text)])
+    return Message(
+        id="m",
+        content=[TextBlock(type="text", text=text)],
+        model="m",
+        role="assistant",
+        stop_reason=stop,
+        type="message",
+        usage=Usage(input_tokens=1, output_tokens=1),
+    )
+
+
+@pytest.fixture(autouse=True)
+def _limpiar_cache():
+    factory._cliente.cache_clear()
+    yield
+    factory._cliente.cache_clear()
 
 
 def _provider(resp=None, exc=None):
@@ -40,6 +56,18 @@ def test_generar_test_parsea_json_y_pide_formato_estructurado():
     fmt = create.call_args.kwargs["output_config"]["format"]
     assert fmt["type"] == "json_schema"
     assert create.call_args.kwargs["model"] == "m"
+
+
+def test_respuesta_que_no_es_message_es_error_del_proveedor():
+    p, _ = _provider(SimpleNamespace(stop_reason="end_turn", content=[]))
+    with pytest.raises(LLMProviderError, match="inesperada"):
+        p.generar_resumen("x")
+
+
+def test_cliente_sin_reintentos_y_con_timeout():
+    client = MagicMock()
+    ClaudeProvider(client, "m")
+    client.with_options.assert_called_once_with(timeout=60.0, max_retries=0)
 
 
 def test_generar_resumen_devuelve_texto():
@@ -101,9 +129,18 @@ def test_factory_fake_claude_y_sin_clave(monkeypatch):
     assert isinstance(factory.get_llm_provider(), FakeLLMProvider)
     _settings(monkeypatch, llm_provider="claude", anthropic_api_key="sk-x")
     assert isinstance(factory.get_llm_provider(), ClaudeProvider)
+    _settings(monkeypatch, llm_provider="claude", anthropic_api_key="sk-x")
+    assert factory.get_llm_provider()._client is not None
+    assert factory._cliente.cache_info().currsize == 1
     _settings(monkeypatch, llm_provider="claude")
     sin = factory.get_llm_provider()
     with pytest.raises(LLMProviderError, match="IA no configurada"):
         sin.generar_test("t", 1)
     with pytest.raises(LLMProviderError, match="IA no configurada"):
         sin.generar_resumen("t")
+
+
+def test_factory_cachea_el_cliente_por_clave_sin_exponerla(monkeypatch):
+    assert factory._cliente("k1") is factory._cliente("k1")
+    assert factory._cliente("k1") is not factory._cliente("k2")
+    assert "k1" not in repr(factory._cliente("k1"))

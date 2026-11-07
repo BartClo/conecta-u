@@ -38,7 +38,7 @@ _SISTEMA = (
 
 class ClaudeProvider(LLMProvider):
     def __init__(self, client: anthropic.Anthropic, model: str):
-        self._client = client.with_options(timeout=TIMEOUT_SEGUNDOS)
+        self._client = client.with_options(timeout=TIMEOUT_SEGUNDOS, max_retries=0)
         self._model = model
 
     def _pedir(self, prompt: str, max_tokens: int, **extra) -> str:
@@ -56,6 +56,8 @@ class ClaudeProvider(LLMProvider):
             raise LLMProviderError(f"error del proveedor de IA (HTTP {exc.status_code})") from exc
         except anthropic.APIError as exc:
             raise LLMProviderError("no se pudo conectar con el proveedor de IA") from exc
+        if not isinstance(resp, anthropic.types.Message):
+            raise LLMProviderError("respuesta inesperada del proveedor")
         if resp.stop_reason in ("refusal", "max_tokens"):
             raise LLMProviderError(f"respuesta incompleta del proveedor ({resp.stop_reason})")
         texto = "".join(b.text for b in resp.content if b.type == "text").strip()

@@ -40,6 +40,10 @@ class Generado:
 
 
 def _validar_test(gen: TestGenerado, n_preguntas: int) -> None:
+    if "\x00" in gen.titulo or any(
+        "\x00" in t for p in gen.preguntas for t in [p.enunciado, *p.opciones]
+    ):
+        raise RespuestaIAInvalidaError("caracteres inválidos en la respuesta de la IA")
     titulo = gen.titulo.strip()
     if not titulo or len(titulo) > MAX_TITULO:
         raise RespuestaIAInvalidaError("título inválido en la respuesta de la IA")
@@ -125,6 +129,11 @@ def _cobrar(db: Session, user_id: str, tipo: str, prompt: str, costo: int, crear
         raise
     except Exception:
         db.rollback()
+        try:
+            _registrar_error(db, user_id, tipo, prompt, "error interno al guardar")
+        except Exception:
+            db.rollback()
+            logger.exception("no se pudo auditar el error interno")
         raise
     return Generado(obj, costo, mov.saldo_resultante)
 
@@ -185,9 +194,10 @@ def generar_resumen_con_ia(
         texto_fuente,
         lambda: provider.generar_resumen(texto_fuente),
     ).strip()
-    if not texto:
-        _registrar_error(db, user_id, TIPO_RESUMEN, texto_fuente, "resumen vacío")
-        raise RespuestaIAInvalidaError("resumen vacío")
+    if not texto or "\x00" in texto:
+        msg = "resumen vacío" if not texto else "caracteres inválidos en la respuesta de la IA"
+        _registrar_error(db, user_id, TIPO_RESUMEN, texto_fuente, msg)
+        raise RespuestaIAInvalidaError(msg)
 
     def crear() -> Resumen:
         resumen = Resumen(

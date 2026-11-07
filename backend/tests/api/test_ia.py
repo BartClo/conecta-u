@@ -176,7 +176,8 @@ def test_fallo_del_proveedor_502_sin_cobro_y_audita():
     prov.error = LLMProviderError("timeout al generar")
     r = _post_test()
     assert r.status_code == 502
-    assert "No se pudo generar" in r.json()["detail"]
+    assert r.json()["detail"] == "No se pudo generar con IA. Inténtalo de nuevo."
+    assert "timeout" not in r.text
     assert _saldo() == BONO_INICIAL and _n(Test) == 0
     g = _gens()[0]
     assert (g.estado, g.costo_creditos, g.error_msg) == ("error", 0, "timeout al generar")
@@ -220,7 +221,8 @@ def test_rollback_atomico_si_falla_el_cobro(monkeypatch):
     monkeypatch.setattr(creditos_service, "gastar", boom)
     with pytest.raises(RuntimeError):
         _post_test()
-    assert _n(Test) == 0 and _n(GeneracionIA) == 0 and _saldo() == BONO_INICIAL
+    assert _n(Test) == 0 and _saldo() == BONO_INICIAL
+    assert [g.estado for g in _gens()] == ["error"]  # solo la auditoria
 
 
 def test_carrera_de_saldo_en_el_cobro_da_402_sin_test_y_audita(monkeypatch):
@@ -307,5 +309,56 @@ def test_respuesta_invalida_es_error_de_proveedor():
 def test_sin_clave_da_502_ia_no_configurada_sin_cobrar():
     app.dependency_overrides.pop(get_llm_provider)
     r = _post_test()
-    assert r.status_code == 502 and "IA no configurada" in r.json()["detail"]
+    assert r.status_code == 502 and "IA no configurada" not in r.text
+    assert _gens()[0].error_msg == "IA no configurada"
     assert _saldo() == BONO_INICIAL
+
+
+def test_fallo_al_persistir_audita_con_texto_fijo(monkeypatch):
+    def boom(*a, **k):
+        raise RuntimeError("secreto de la db")
+
+    monkeypatch.setattr(creditos_service, "gastar", boom)
+    with pytest.raises(RuntimeError):
+        _post_test()
+    g = _gens()[0]
+    assert (g.estado, g.error_msg) == ("error", "error interno al guardar")
+
+
+def test_fallo_al_auditar_no_tapa_el_error_original(monkeypatch):
+    def boom(*a, **k):
+        raise RuntimeError("original")
+
+    def boom2(*a, **k):
+        raise ValueError("auditoria")
+
+    monkeypatch.setattr(creditos_service, "gastar", boom)
+    monkeypatch.setattr(ia_service, "_registrar_error", boom2)
+    with pytest.raises(RuntimeError, match="original"):
+        _post_test()
+
+
+def test_nul_en_la_entrada_es_422():
+    nul = "a\x00b"
+    assert _post_test(tema=nul).status_code == 422
+    assert _post_test(texto_fuente=nul).status_code == 422
+    assert client.post("/api/ia/resumenes", json={"texto_fuente": TEXTO + nul}).status_code == 422
+    assert (
+        client.post("/api/ia/resumenes", json={"texto_fuente": TEXTO, "titulo": nul}).status_code
+        == 422
+    )
+
+
+def test_texto_corto_o_tema_vacio_se_miden_recortados():
+    assert (
+        client.post("/api/ia/resumenes", json={"texto_fuente": " " * 60 + "x"}).status_code == 422
+    )
+    assert _post_test(tema="   ", texto_fuente=None).status_code == 422
+
+
+def test_nul_en_la_salida_del_proveedor_es_502_sin_cobro():
+    prov.test = TestGenerado(titulo="T", preguntas=[_preg(enunciado="a\x00b")])
+    assert _post_test(n_preguntas=1).status_code == 502
+    prov.resumen = "ho\x00la"
+    assert client.post("/api/ia/resumenes", json={"texto_fuente": TEXTO}).status_code == 502
+    assert _saldo() == BONO_INICIAL and _n(Test) == 0 and _n(Resumen) == 0

@@ -31,7 +31,9 @@ def _http_errors() -> Iterator[None]:
     except svc.SaldoInsuficienteError as exc:
         raise HTTPException(status_code=402, detail="Créditos insuficientes") from exc
     except svc.LLMProviderError as exc:
-        raise HTTPException(status_code=502, detail=f"No se pudo generar: {exc}") from exc
+        raise HTTPException(
+            status_code=502, detail="No se pudo generar con IA. Inténtalo de nuevo."
+        ) from exc
 
 
 # `def` (no `async def`): provider y sesion SQLAlchemy son sincronos y FastAPI corre
