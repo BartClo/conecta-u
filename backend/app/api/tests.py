@@ -23,6 +23,8 @@ def _http_errors() -> Iterator[None]:
         raise HTTPException(status_code=404, detail="Materia no encontrada") from exc
     except svc.NoAutorizado as exc:
         raise HTTPException(status_code=403, detail="Solo el autor puede hacer esto") from exc
+    except svc.TestEnUso as exc:
+        raise HTTPException(status_code=409, detail="El test ya tiene desafíos") from exc
     except svc.TestInvalido as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 

@@ -1,5 +1,7 @@
+from sqlalchemy import exists
 from sqlalchemy.orm import Session, selectinload
 
+from app.models.desafio import Desafio
 from app.models.test import Opcion, Pregunta, Test
 
 
@@ -41,3 +43,7 @@ def add(db: Session, test: Test) -> Test:
 def delete(db: Session, test: Test) -> None:
     db.delete(test)  # el cascade del ORM borra preguntas y opciones
     db.commit()
+
+
+def tiene_desafios(db: Session, test_id: str) -> bool:
+    return db.query(exists().where(Desafio.test_id == test_id)).scalar()

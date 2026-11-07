@@ -2,6 +2,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.core.roles_grupo import ROL_OWNER
+from app.models.desafio import Desafio, Intento, RespuestaIntento
 from app.models.grupo import Grupo
 from app.models.materia import Materia
 from app.models.membresia import Membresia
@@ -79,6 +80,14 @@ def guardar(db: Session, grupo: Grupo) -> Grupo:
 
 
 def delete(db: Session, grupo: Grupo) -> None:
+    # Explicito (ademas del ON DELETE CASCADE) para que funcione tambien en SQLite.
+    desafios = db.query(Desafio.id).filter(Desafio.grupo_id == grupo.id)
+    intentos = db.query(Intento.id).filter(Intento.desafio_id.in_(desafios))
+    db.query(RespuestaIntento).filter(RespuestaIntento.intento_id.in_(intentos)).delete(
+        synchronize_session=False
+    )
+    db.query(Intento).filter(Intento.desafio_id.in_(desafios)).delete(synchronize_session=False)
+    db.query(Desafio).filter(Desafio.grupo_id == grupo.id).delete(synchronize_session=False)
     db.query(Membresia).filter(Membresia.grupo_id == grupo.id).delete()
     db.delete(grupo)
     db.commit()

@@ -22,6 +22,12 @@ class NoAutorizado(Exception):
     pass
 
 
+class TestEnUso(Exception):
+    """El test ya tiene desafios: editarlo o borrarlo rompe las respuestas guardadas."""
+
+    __test__ = False
+
+
 class TestInvalido(Exception):
     """Primer problema de validacion, con mensaje especifico para el usuario."""
 
@@ -136,6 +142,8 @@ def _test_de_autor(db: Session, test_id: str, user_id: str) -> Test:
     test = get_test(db, test_id)
     if test.autor_id != user_id:
         raise NoAutorizado()
+    if repo.tiene_desafios(db, test_id):
+        raise TestEnUso()
     return test
 
 

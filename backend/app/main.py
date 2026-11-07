@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.creditos import router as creditos_router
 from app.api.cursos import router as cursos_router
+from app.api.desafios import router as desafios_router
 from app.api.eventos import router as eventos_router
 from app.api.grupos import router as grupos_router
 from app.api.materias import router as materias_router
@@ -26,6 +27,7 @@ app.include_router(materias_router, prefix="/api")
 app.include_router(grupos_router, prefix="/api")
 app.include_router(tests_router, prefix="/api")
 app.include_router(creditos_router, prefix="/api")
+app.include_router(desafios_router, prefix="/api")
 
 
 @app.get("/health")
