@@ -11,6 +11,7 @@ from app.models import (  # noqa: F401  (registran todos los modelos en Base.met
     desafio,
     evento,
     grupo,
+    ia,
     materia,
     membresia,
     semestre,
