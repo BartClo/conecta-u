@@ -7,6 +7,7 @@ from app.api.grupos import router as grupos_router
 from app.api.materias import router as materias_router
 from app.api.me import router as me_router
 from app.api.semestres import router as semestres_router
+from app.api.tests import router as tests_router
 
 app = FastAPI(title="Conecta-U API")
 app.add_middleware(
@@ -22,6 +23,7 @@ app.include_router(cursos_router, prefix="/api")
 app.include_router(eventos_router, prefix="/api")
 app.include_router(materias_router, prefix="/api")
 app.include_router(grupos_router, prefix="/api")
+app.include_router(tests_router, prefix="/api")
 
 
 @app.get("/health")
