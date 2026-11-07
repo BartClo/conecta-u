@@ -11,7 +11,23 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       thresholds: { statements: 95, branches: 95, functions: 95, lines: 95 },
-      exclude: ["**/*.config.*", "app/**/layout.tsx", "app/**/page.tsx", ".next/**"],
+      // Measure our own logic (client components, form modals, lib helpers).
+      // Excluded: Next server-runtime wrappers that can't execute in jsdom
+      // (Server Components, middleware, cookie/Supabase SSR clients), the R3F
+      // 3D scene (only its pure computeNodePositions is unit-testable — and it
+      // is tested), and generated shadcn primitives.
+      exclude: [
+        "**/*.config.*",
+        ".next/**",
+        "app/**/layout.tsx",
+        "app/**/page.tsx",
+        "app/providers.tsx",
+        "middleware.ts",
+        "lib/supabase/**",
+        "lib/api-server.ts",
+        "components/ui/**",
+        "components/dashboard/graph-3d.tsx",
+      ],
     },
   },
 });

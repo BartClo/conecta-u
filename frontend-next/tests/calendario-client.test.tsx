@@ -40,6 +40,26 @@ describe("CalendarioClient", () => {
     expect(screen.getByText("Examen parcial")).toBeInTheDocument();
   });
 
+  it("navega al mes anterior y recarga eventos", async () => {
+    render(
+      <CalendarioClient
+        initialOcurrencias={[OCURRENCIA]}
+        initialMonth={hoy.toISOString()}
+        cursos={[]}
+      />,
+    );
+
+    const llamadasIniciales = (apiFetchClient as ReturnType<typeof vi.fn>).mock
+      .calls.length;
+    fireEvent.click(screen.getByRole("button", { name: /mes anterior/i }));
+
+    await waitFor(() =>
+      expect(
+        (apiFetchClient as ReturnType<typeof vi.fn>).mock.calls.length,
+      ).toBeGreaterThan(llamadasIniciales),
+    );
+  });
+
   it("navega al mes siguiente y recarga eventos", async () => {
     render(
       <CalendarioClient
@@ -112,5 +132,132 @@ describe("CalendarioClient", () => {
     await waitFor(() =>
       expect(screen.queryByText("Nuevo evento")).not.toBeInTheDocument(),
     );
+  });
+
+  it("borra el evento seleccionado cuando se confirma", async () => {
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    const EVENTO_COMPLETO = {
+      ...OCURRENCIA,
+      recurrencia_dia_semana: null,
+      recurrencia_hasta: null,
+    };
+    (apiFetchClient as ReturnType<typeof vi.fn>).mockImplementation(
+      (path: string, options?: { method?: string }) => {
+        if (options?.method === "DELETE") return Promise.resolve(undefined);
+        if (path.startsWith("/api/eventos/e1"))
+          return Promise.resolve(EVENTO_COMPLETO);
+        if (path.startsWith("/api/eventos"))
+          return Promise.resolve([OCURRENCIA]);
+        return Promise.reject(new Error(`unexpected path ${path}`));
+      },
+    );
+
+    render(
+      <CalendarioClient
+        initialOcurrencias={[OCURRENCIA]}
+        initialMonth={hoy.toISOString()}
+        cursos={[]}
+      />,
+    );
+
+    fireEvent.click(screen.getByText("Examen parcial"));
+    await waitFor(() =>
+      expect(screen.getByText("Editar evento")).toBeInTheDocument(),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /borrar evento/i }));
+
+    await waitFor(() =>
+      expect(apiFetchClient).toHaveBeenCalledWith(
+        "/api/eventos/e1",
+        expect.objectContaining({ method: "DELETE" }),
+      ),
+    );
+    await waitFor(() =>
+      expect(screen.queryByText("Editar evento")).not.toBeInTheDocument(),
+    );
+  });
+
+  it("guarda la edicion de un evento existente con PUT", async () => {
+    const EVENTO_COMPLETO = {
+      ...OCURRENCIA,
+      recurrencia_dia_semana: null,
+      recurrencia_hasta: null,
+    };
+    (apiFetchClient as ReturnType<typeof vi.fn>).mockImplementation(
+      (path: string, options?: { method?: string }) => {
+        if (options?.method === "PUT") return Promise.resolve(undefined);
+        if (path.startsWith("/api/eventos/e1"))
+          return Promise.resolve(EVENTO_COMPLETO);
+        if (path.startsWith("/api/eventos"))
+          return Promise.resolve([OCURRENCIA]);
+        return Promise.reject(new Error(`unexpected path ${path}`));
+      },
+    );
+
+    render(
+      <CalendarioClient
+        initialOcurrencias={[OCURRENCIA]}
+        initialMonth={hoy.toISOString()}
+        cursos={[]}
+      />,
+    );
+
+    fireEvent.click(screen.getByText("Examen parcial"));
+    await waitFor(() =>
+      expect(screen.getByText("Editar evento")).toBeInTheDocument(),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /guardar/i }));
+
+    await waitFor(() =>
+      expect(apiFetchClient).toHaveBeenCalledWith(
+        "/api/eventos/e1",
+        expect.objectContaining({ method: "PUT" }),
+      ),
+    );
+    await waitFor(() =>
+      expect(screen.queryByText("Editar evento")).not.toBeInTheDocument(),
+    );
+  });
+
+  it("no borra el evento si se cancela el confirm", async () => {
+    vi.spyOn(window, "confirm").mockReturnValue(false);
+    const EVENTO_COMPLETO = {
+      ...OCURRENCIA,
+      recurrencia_dia_semana: null,
+      recurrencia_hasta: null,
+    };
+    (apiFetchClient as ReturnType<typeof vi.fn>).mockImplementation(
+      (path: string) => {
+        if (path.startsWith("/api/eventos/e1"))
+          return Promise.resolve(EVENTO_COMPLETO);
+        if (path.startsWith("/api/eventos"))
+          return Promise.resolve([OCURRENCIA]);
+        return Promise.reject(new Error(`unexpected path ${path}`));
+      },
+    );
+
+    render(
+      <CalendarioClient
+        initialOcurrencias={[OCURRENCIA]}
+        initialMonth={hoy.toISOString()}
+        cursos={[]}
+      />,
+    );
+
+    fireEvent.click(screen.getByText("Examen parcial"));
+    await waitFor(() =>
+      expect(screen.getByText("Editar evento")).toBeInTheDocument(),
+    );
+
+    const llamadasAntes = (apiFetchClient as ReturnType<typeof vi.fn>).mock
+      .calls.length;
+    fireEvent.click(screen.getByRole("button", { name: /borrar evento/i }));
+
+    expect(
+      (apiFetchClient as ReturnType<typeof vi.fn>).mock.calls.length,
+    ).toBe(llamadasAntes);
+    expect(screen.getByText("Editar evento")).toBeInTheDocument();
   });
 });

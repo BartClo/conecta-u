@@ -31,4 +31,49 @@ describe("CursoDetalleClient", () => {
       }),
     );
   });
+
+  it("does not delete when the user cancels the confirm dialog", async () => {
+    vi.spyOn(window, "confirm").mockReturnValue(false);
+    (apiFetchClient as ReturnType<typeof vi.fn>).mockReset();
+
+    render(<CursoDetalleClient curso={CURSO} />);
+    fireEvent.click(screen.getByRole("button", { name: /borrar/i }));
+
+    expect(apiFetchClient).not.toHaveBeenCalled();
+  });
+
+  it("edits the curso and shows the updated data", async () => {
+    const ACTUALIZADO = { ...CURSO, nombre: "Cálculo III" };
+    (apiFetchClient as ReturnType<typeof vi.fn>).mockReset();
+    (apiFetchClient as ReturnType<typeof vi.fn>).mockResolvedValue(
+      ACTUALIZADO,
+    );
+
+    render(<CursoDetalleClient curso={CURSO} />);
+    fireEvent.click(screen.getByRole("button", { name: /editar/i }));
+    fireEvent.change(screen.getByLabelText(/^nombre$/i), {
+      target: { value: "Cálculo III" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /guardar/i }));
+
+    await waitFor(() =>
+      expect(apiFetchClient).toHaveBeenCalledWith(
+        "/api/cursos/c1",
+        expect.objectContaining({ method: "PUT" }),
+      ),
+    );
+    await waitFor(() =>
+      expect(screen.getByText("Cálculo III")).toBeInTheDocument(),
+    );
+  });
+
+  it("closes the edit modal without submitting when cancelled", () => {
+    render(<CursoDetalleClient curso={CURSO} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /editar/i }));
+    expect(screen.getByLabelText(/^nombre$/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /cancelar/i }));
+    expect(screen.queryByLabelText(/^nombre$/i)).not.toBeInTheDocument();
+  });
 });

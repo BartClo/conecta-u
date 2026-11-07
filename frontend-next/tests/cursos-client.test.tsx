@@ -70,4 +70,86 @@ describe("CursosClient", () => {
       expect(screen.getByText("Física I")).toBeInTheDocument(),
     );
   });
+
+  it("creates a new semestre and selects it", async () => {
+    const NUEVO_SEMESTRE = {
+      id: "s2",
+      nombre: "2026-2",
+      fecha_inicio: "2026-07-01",
+      fecha_fin: "2026-12-01",
+    };
+    (apiFetchClient as ReturnType<typeof vi.fn>).mockResolvedValue(
+      NUEVO_SEMESTRE,
+    );
+    renderWithQuery(
+      <CursosClient initialSemestres={[SEMESTRE]} initialCursos={[CURSO]} />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /nuevo semestre/i }));
+    fireEvent.change(screen.getByLabelText(/^nombre$/i), {
+      target: { value: "2026-2" },
+    });
+    fireEvent.change(screen.getByLabelText(/fecha de inicio/i), {
+      target: { value: "2026-07-01" },
+    });
+    fireEvent.change(screen.getByLabelText(/fecha de fin/i), {
+      target: { value: "2026-12-01" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /guardar/i }));
+
+    await waitFor(() =>
+      expect(apiFetchClient).toHaveBeenCalledWith(
+        "/api/semestres",
+        expect.objectContaining({ method: "POST" }),
+      ),
+    );
+    expect(
+      screen.getByRole("option", { name: "2026-2" }),
+    ).toBeInTheDocument();
+  });
+
+  it("reloads cursos when a different semestre is selected", async () => {
+    const SEMESTRE2 = {
+      id: "s2",
+      nombre: "2026-2",
+      fecha_inicio: "2026-07-01",
+      fecha_fin: "2026-12-01",
+    };
+    const CURSO2 = { ...CURSO, id: "c2", nombre: "Álgebra" };
+    (apiFetchClient as ReturnType<typeof vi.fn>).mockResolvedValue([CURSO2]);
+    renderWithQuery(
+      <CursosClient
+        initialSemestres={[SEMESTRE, SEMESTRE2]}
+        initialCursos={[CURSO]}
+      />,
+    );
+
+    fireEvent.change(screen.getByRole("combobox"), {
+      target: { value: "s2" },
+    });
+
+    await waitFor(() =>
+      expect(apiFetchClient).toHaveBeenCalledWith(
+        "/api/cursos?semestre_id=s2",
+      ),
+    );
+    await waitFor(() =>
+      expect(screen.getByText("Álgebra")).toBeInTheDocument(),
+    );
+  });
+
+  it("closes the semestre and curso modals without submitting", () => {
+    renderWithQuery(
+      <CursosClient initialSemestres={[SEMESTRE]} initialCursos={[CURSO]} />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /nuevo semestre/i }));
+    fireEvent.click(screen.getByRole("button", { name: /cancelar/i }));
+    expect(screen.queryByText("Nuevo semestre")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /nuevo curso/i }));
+    fireEvent.click(screen.getByRole("button", { name: /cancelar/i }));
+    expect(screen.queryByLabelText(/c.digo/i)).not.toBeInTheDocument();
+    expect(apiFetchClient).not.toHaveBeenCalled();
+  });
 });

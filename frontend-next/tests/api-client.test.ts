@@ -41,6 +41,46 @@ describe("apiFetchClient", () => {
     expect(result).toEqual({ id: "c1" });
   });
 
+  it("sends no Authorization header when there is no session", async () => {
+    mockSupabase(null);
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ id: "c1" }),
+    });
+
+    await apiFetchClient<{ id: string }>("/api/cursos/c1");
+
+    expect(fetch).toHaveBeenCalledWith(
+      "http://localhost:8000/api/cursos/c1",
+      expect.objectContaining({ headers: {} }),
+    );
+  });
+
+  it("sends a Content-Type header and serialized body when a body is given", async () => {
+    mockSupabase("token-123");
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ id: "c1" }),
+    });
+
+    await apiFetchClient("/api/cursos", {
+      method: "POST",
+      body: { nombre: "x" },
+    });
+
+    expect(fetch).toHaveBeenCalledWith(
+      "http://localhost:8000/api/cursos",
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          "Content-Type": "application/json",
+        }),
+        body: JSON.stringify({ nombre: "x" }),
+      }),
+    );
+  });
+
   it("returns undefined for a 204 response", async () => {
     mockSupabase("token-123");
     (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({

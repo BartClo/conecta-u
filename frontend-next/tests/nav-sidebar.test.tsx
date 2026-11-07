@@ -28,6 +28,16 @@ describe("NavSidebar", () => {
     expect(screen.getByText(/ada/i)).toBeInTheDocument();
   });
 
+  it("falls back to the email when there is no userName", () => {
+    (createBrowserSupabaseClient as ReturnType<typeof vi.fn>).mockReturnValue({
+      auth: { signOut: vi.fn() },
+    });
+
+    render(<NavSidebar userName={null} userEmail="ada@x.com" />);
+
+    expect(screen.getByText("ada@x.com")).toBeInTheDocument();
+  });
+
   it("signs out on button click", () => {
     const signOut = vi.fn();
     (createBrowserSupabaseClient as ReturnType<typeof vi.fn>).mockReturnValue({
