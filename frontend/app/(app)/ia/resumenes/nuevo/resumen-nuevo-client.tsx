@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { statusDeError } from "@/lib/api-error";
 import { apiFetchClient } from "@/lib/api-client";
 import { COSTO_GENERAR_RESUMEN_IA } from "@/lib/economia";
 import { useSaldo } from "@/lib/hooks/use-saldo";
@@ -22,6 +23,7 @@ const schema = z.object({
   titulo: z.string().max(150, "Máximo 150 caracteres.").optional(),
   texto_fuente: z
     .string()
+    .trim()
     .min(50, "Pega al menos 50 caracteres de texto.")
     .max(50000, "Máximo 50000 caracteres."),
 });
@@ -64,6 +66,10 @@ export function ResumenNuevoClient() {
       await queryClient.invalidateQueries({ queryKey: ["creditos"] });
       router.push(`/ia/resumenes/${res.resumen.id}`);
     } catch (err) {
+      // 402: el saldo mostrado quedo desactualizado, refrescarlo
+      if (statusDeError(err) === 402) {
+        await queryClient.invalidateQueries({ queryKey: ["creditos"] });
+      }
       setError(mensajeGeneracion(err, "resumen"));
       setPending(false);
     }

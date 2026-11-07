@@ -233,12 +233,14 @@ describe("TestIaClient", () => {
   ])(
     "shows the %i message, keeps the values and does not navigate",
     async (status, msg) => {
+      const spy = vi.spyOn(client, "invalidateQueries");
       api.mockRejectedValue(new Error(`API request failed: ${status}`));
       renderWith(<TestIaClient materiaId="m1" />);
       fill();
       fireEvent.click(screen.getByRole("button", { name: "Generar test" }));
 
       expect(await screen.findByText(msg)).toBeInTheDocument();
+      expect(spy).toHaveBeenCalledTimes(status === 402 ? 1 : 0);
       expect(push).not.toHaveBeenCalled();
       expect(screen.getByLabelText("Tema o temario")).toHaveValue("Cinemática");
       expect(screen.getByLabelText("Tema o temario")).toBeEnabled();
@@ -314,6 +316,16 @@ describe("ResumenNuevoClient", () => {
     });
   });
 
+  it("measures the minimum length on the trimmed text", async () => {
+    renderWith(<ResumenNuevoClient />);
+    fill(`${" ".repeat(60)}corto`);
+    fireEvent.click(screen.getByRole("button", { name: "Generar resumen" }));
+    expect(
+      await screen.findByText("Pega al menos 50 caracteres de texto."),
+    ).toBeInTheDocument();
+    expect(api).not.toHaveBeenCalled();
+  });
+
   it("shows the overlay while pending", async () => {
     api.mockReturnValue(new Promise(() => {}));
     renderWith(<ResumenNuevoClient />);
@@ -339,11 +351,13 @@ describe("ResumenNuevoClient", () => {
     [402, /No tienes créditos suficientes para generar este resumen/],
     [502, /No se te cobraron créditos — intenta de nuevo/],
   ])("shows the %i message and keeps the text", async (status, msg) => {
+    const spy = vi.spyOn(client, "invalidateQueries");
     api.mockRejectedValue(new Error(`API request failed: ${status}`));
     renderWith(<ResumenNuevoClient />);
     fill();
     fireEvent.click(screen.getByRole("button", { name: "Generar resumen" }));
     expect(await screen.findByText(msg)).toBeInTheDocument();
+    expect(spy).toHaveBeenCalledTimes(status === 402 ? 1 : 0);
     expect(push).not.toHaveBeenCalled();
     expect(screen.getByLabelText("Texto a resumir")).toHaveValue(TEXTO_LARGO);
   });

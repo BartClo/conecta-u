@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { statusDeError } from "@/lib/api-error";
 import { apiFetchClient } from "@/lib/api-client";
 import { COSTO_GENERAR_TEST_IA } from "@/lib/economia";
 import { useSaldo } from "@/lib/hooks/use-saldo";
@@ -72,6 +73,10 @@ export function TestIaClient({ materiaId }: { materiaId: string }) {
       await queryClient.invalidateQueries({ queryKey: ["creditos"] });
       router.push(`/materias/${materiaId}/tests/${res.test.id}`);
     } catch (err) {
+      // 402: el saldo mostrado quedo desactualizado, refrescarlo
+      if (statusDeError(err) === 402) {
+        await queryClient.invalidateQueries({ queryKey: ["creditos"] });
+      }
       setError(mensajeGeneracion(err, "test"));
       setPending(false);
     }
