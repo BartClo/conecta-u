@@ -99,12 +99,16 @@ function nodoObjeto(n: GraphNode) {
   );
   glow.scale.setScalar(r * 4.2);
   grupo.add(glow);
-  const etiqueta = textoSprite(
-    n.label,
-    n.tipo === "companero" ? 7 : n.tipo === "yo" ? 12 : 9.5,
-    n.tipo === "companero" ? "#a5f3fc" : "#f8fafc",
-  );
+  // Classmates crowd the centre: their names live in the hover tooltip only,
+  // so they never cover the user's own label.
+  if (n.tipo === "companero") return grupo;
+  const etiqueta = textoSprite(n.label, n.tipo === "yo" ? 12 : 9.5, "#f8fafc");
   etiqueta.position.y = r + 6;
+  if (n.tipo === "yo") {
+    // Always drawn on top of nearby nodes and labels.
+    etiqueta.material.depthTest = false;
+    etiqueta.renderOrder = 10;
+  }
   grupo.add(etiqueta);
   return grupo;
 }

@@ -69,7 +69,7 @@ export default async function DashboardPage() {
   const pendientes = desafiosPendientes(grupos, desafios);
   const posiciones = mejoresPosiciones(grupos, tablas, me.id);
   const victorias = posiciones.reduce((s, p) => s + p.ganados, 0);
-  const podios = posiciones.filter((p) => p.posicion <= 3).length;
+  const mejor = posiciones[0];
   const grafo = buildGraph(
     { id: me.id, nombre: nombre.split(/[\s@]/)[0] },
     grupos,
@@ -120,7 +120,11 @@ export default async function DashboardPage() {
           borde="from-gold/20"
           valor={victorias}
           etiqueta="Victorias"
-          pie={`${podios} ${podios === 1 ? "podio" : "podios"} en tus grupos`}
+          pie={
+            mejor
+              ? `Mejor puesto: #${mejor.posicion} en ${mejor.grupo.nombre}`
+              : "desafíos ganados"
+          }
           href="/ranking"
         />
         <StatCard
