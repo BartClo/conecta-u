@@ -6,6 +6,9 @@
 
 @theme inline {
   --color-background: var(--background);
+  --color-xp: var(--xp);
+  --color-gold: var(--gold);
+  --color-cyan: var(--cyan);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-body);
   --font-mono: var(--font-geist-mono);
@@ -89,38 +92,44 @@
   --evento-otro: oklch(0.6 0.2 310);
 }
 
+/* Dark-first identity: deep ink-violet night, electric violet as the brand
+   voltage, lime "XP" for credits/rewards, gold for podiums/victories. */
 .dark {
-  --background: oklch(0.16 0.01 200);
-  --foreground: oklch(0.96 0 0);
-  --card: oklch(0.2 0.015 200);
-  --card-foreground: oklch(0.96 0 0);
-  --popover: oklch(0.2 0.015 200);
-  --popover-foreground: oklch(0.96 0 0);
-  --primary: oklch(0.7 0.12 180);
-  --primary-foreground: oklch(0.14 0.02 200);
-  --secondary: oklch(0.28 0.02 200);
-  --secondary-foreground: oklch(0.96 0 0);
-  --muted: oklch(0.25 0.015 200);
-  --muted-foreground: oklch(0.7 0.02 200);
-  --accent: oklch(0.65 0.18 45);
-  --accent-foreground: oklch(0.14 0 0);
-  --destructive: oklch(0.65 0.22 25);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.7 0.12 180);
-  --chart-1: oklch(0.7 0.12 180);
-  --chart-2: oklch(0.65 0.18 45);
-  --chart-3: oklch(0.6 0.2 250);
-  --chart-4: oklch(0.6 0.2 145);
-  --chart-5: oklch(0.6 0.2 310);
-  --sidebar: oklch(0.2 0.015 200);
-  --sidebar-foreground: oklch(0.96 0 0);
-  --sidebar-primary: oklch(0.7 0.12 180);
-  --sidebar-primary-foreground: oklch(0.14 0.02 200);
-  --sidebar-accent: oklch(0.28 0.02 200);
-  --sidebar-accent-foreground: oklch(0.96 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.7 0.12 180);
+  --background: oklch(0.14 0.03 282);
+  --foreground: oklch(0.97 0.01 280);
+  --card: oklch(0.19 0.035 282);
+  --card-foreground: oklch(0.97 0.01 280);
+  --popover: oklch(0.2 0.04 282);
+  --popover-foreground: oklch(0.97 0.01 280);
+  --primary: oklch(0.7 0.2 292);
+  --primary-foreground: oklch(0.14 0.03 282);
+  --secondary: oklch(0.25 0.04 284);
+  --secondary-foreground: oklch(0.97 0.01 280);
+  --muted: oklch(0.23 0.035 282);
+  --muted-foreground: oklch(0.74 0.03 282);
+  --accent: oklch(0.28 0.05 288);
+  --accent-foreground: oklch(0.97 0.01 280);
+  --destructive: oklch(0.66 0.22 22);
+  --border: oklch(1 0 0 / 9%);
+  --input: oklch(1 0 0 / 14%);
+  --ring: oklch(0.7 0.2 292);
+  --chart-1: oklch(0.7 0.2 292);
+  --chart-2: oklch(0.88 0.2 128);
+  --chart-3: oklch(0.83 0.16 85);
+  --chart-4: oklch(0.8 0.14 210);
+  --chart-5: oklch(0.7 0.22 350);
+  --sidebar: oklch(0.16 0.035 282);
+  --sidebar-foreground: oklch(0.9 0.02 280);
+  --sidebar-primary: oklch(0.7 0.2 292);
+  --sidebar-primary-foreground: oklch(0.14 0.03 282);
+  --sidebar-accent: oklch(0.24 0.05 288);
+  --sidebar-accent-foreground: oklch(0.98 0.01 280);
+  --sidebar-border: oklch(1 0 0 / 8%);
+  --sidebar-ring: oklch(0.7 0.2 292);
+
+  --xp: oklch(0.88 0.2 128);
+  --gold: oklch(0.83 0.16 85);
+  --cyan: oklch(0.8 0.14 210);
 
   --evento-examen: oklch(0.65 0.22 25);
   --evento-entrega: oklch(0.7 0.2 55);
@@ -135,6 +144,18 @@
   }
   body {
     @apply bg-background text-foreground;
+    background-image:
+      radial-gradient(
+        60rem 40rem at 85% -10%,
+        oklch(0.7 0.2 292 / 14%),
+        transparent 60%
+      ),
+      radial-gradient(
+        50rem 30rem at -10% 110%,
+        oklch(0.88 0.2 128 / 6%),
+        transparent 60%
+      );
+    background-attachment: fixed;
   }
   html {
     @apply font-sans;
@@ -147,5 +168,29 @@
   h5,
   h6 {
     font-family: var(--font-display), var(--font-sans);
+  }
+}
+
+@layer utilities {
+  /* Faint blueprint grid for hero surfaces. */
+  .bg-grid {
+    background-image:
+      linear-gradient(oklch(1 0 0 / 4%) 1px, transparent 1px),
+      linear-gradient(90deg, oklch(1 0 0 / 4%) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+  .text-gradient {
+    background: linear-gradient(
+      100deg,
+      var(--foreground) 20%,
+      var(--primary) 60%,
+      var(--xp)
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
   }
 }

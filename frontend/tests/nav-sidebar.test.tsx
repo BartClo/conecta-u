@@ -9,7 +9,11 @@ vi.mock("../lib/supabase/client", () => ({
   createBrowserSupabaseClient: vi.fn(),
 }));
 vi.mock("../lib/api-client", () => ({ apiFetchClient: vi.fn() }));
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
+const nav = vi.hoisted(() => ({ pathname: "/grupos/g1" as string | null }));
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn() }),
+  usePathname: () => nav.pathname,
+}));
 
 function renderNav(ui: React.ReactElement) {
   const client = new QueryClient({
@@ -61,6 +65,31 @@ describe("NavSidebar", () => {
     expect(screen.queryByText("Chat IA")).not.toBeInTheDocument();
     expect(screen.getByText("Perfil")).toBeInTheDocument();
     expect(screen.getByText(/ada/i)).toBeInTheDocument();
+  });
+
+  it("marks the current section (including nested routes) as the active page", () => {
+    (createBrowserSupabaseClient as ReturnType<typeof vi.fn>).mockReturnValue({
+      auth: { signOut: vi.fn() },
+    });
+    nav.pathname = "/ia/resumenes/nuevo";
+    const { unmount } = renderNav(
+      <NavSidebar userName="Ada" userEmail="ada@x.com" />,
+    );
+    expect(screen.getByRole("link", { name: "Asistente IA" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(screen.getByRole("link", { name: "Grupos" })).not.toHaveAttribute(
+      "aria-current",
+    );
+    unmount();
+
+    nav.pathname = null;
+    renderNav(<NavSidebar userName="Ada" userEmail="ada@x.com" />);
+    expect(screen.getByRole("link", { name: "Inicio" })).not.toHaveAttribute(
+      "aria-current",
+    );
+    nav.pathname = "/grupos/g1";
   });
 
   it("falls back to the email when there is no userName", () => {

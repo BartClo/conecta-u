@@ -23,7 +23,10 @@ vi.mock("@supabase/ssr", () => ({
 vi.mock("../lib/supabase/client", () => ({
   createBrowserSupabaseClient: vi.fn(),
 }));
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push }),
+  usePathname: () => "/dashboard",
+}));
 
 function peticion(path: string, cookie?: string) {
   return new NextRequest(`http://localhost${path}`, {

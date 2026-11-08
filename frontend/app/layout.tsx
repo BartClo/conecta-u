@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
-import { Outfit, Work_Sans, Geist_Mono } from "next/font/google";
+import { Bricolage_Grotesque, Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 
-const displayFont = Outfit({
+const displayFont = Bricolage_Grotesque({
   variable: "--font-display",
   subsets: ["latin"],
 });
 
-const bodyFont = Work_Sans({
+const bodyFont = Geist({
   variable: "--font-body",
   subsets: ["latin"],
 });

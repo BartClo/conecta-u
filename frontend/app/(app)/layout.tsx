@@ -18,9 +18,11 @@ export default async function AppLayout({
   const me = await apiFetchServer<Me>("/api/me");
 
   return (
-    <div className="flex">
+    <div className="flex min-h-screen">
       <NavSidebar userName={me.name} userEmail={me.email} />
-      <main className="flex-1 p-6">{children}</main>
+      <main className="min-w-0 flex-1 px-8 py-7">
+        <div className="mx-auto w-full max-w-7xl">{children}</div>
+      </main>
     </div>
   );
 }

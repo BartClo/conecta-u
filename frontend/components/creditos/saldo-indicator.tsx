@@ -3,7 +3,11 @@
 import { SaldoContador } from "@/components/creditos/saldo-contador";
 import { useSaldo } from "@/lib/hooks/use-saldo";
 
-export function SaldoIndicator() {
+export function SaldoIndicator({
+  className = "text-sm font-semibold text-primary",
+}: {
+  className?: string;
+}) {
   const { data, isLoading } = useSaldo();
   if (isLoading) {
     return (
@@ -16,7 +20,7 @@ export function SaldoIndicator() {
   // On error there is no data: omit the number, the link still works.
   if (!data) return null;
   return (
-    <span className="text-sm font-semibold text-primary">
+    <span className={className}>
       <SaldoContador valor={data.saldo} />
     </span>
   );
