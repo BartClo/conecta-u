@@ -16,9 +16,9 @@ export default defineConfig({
       thresholds: { statements: 95, branches: 95, functions: 95, lines: 95 },
       // Measure our own logic (client components, form modals, lib helpers).
       // Excluded: Next server-runtime wrappers that can't execute in jsdom
-      // (Server Components, middleware, cookie/Supabase SSR clients), the R3F
-      // 3D scene (only its pure computeNodePositions is unit-testable — and it
-      // is tested), and generated shadcn primitives.
+      // (Server Components, middleware, cookie/Supabase SSR clients), the WebGL
+      // graph wrapper around react-force-graph-3d (its node/link shaping lives
+      // in lib/graph.ts, which is tested), and generated shadcn primitives.
       exclude: [
         "**/*.config.*",
         ".next/**",
