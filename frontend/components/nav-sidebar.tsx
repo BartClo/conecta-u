@@ -68,23 +68,27 @@ export function NavSidebar({ userName, userEmail }: NavSidebarProps) {
           </span>
         </Link>
 
-        <Link
-          href="/creditos"
-          aria-label="Créditos"
-          aria-describedby="nav-saldo"
-          className={`group relative overflow-hidden rounded-xl border border-xp/25 bg-gradient-to-br from-xp/15 via-xp/5 to-transparent p-2 transition-colors hover:border-xp/50 lg:p-3 ${activo(pathname, "/creditos") ? "ring-1 ring-xp/60" : ""}`}
-        >
-          <span className="hidden items-center gap-2 text-xs font-medium uppercase tracking-wider text-xp/90 lg:flex">
-            <Coins className="size-3.5" aria-hidden />
-            Créditos
-          </span>
-          <span id="nav-saldo" className="mt-1 flex h-9 items-center">
-            <SaldoIndicator className="font-heading text-lg font-bold text-xp tabular lg:text-3xl" />
-          </span>
-          <span className="hidden text-xs text-muted-foreground lg:block">
-            Gana desafíos, gasta en IA
-          </span>
-        </Link>
+        <ul>
+          <li>
+            <Link
+              href="/creditos"
+              aria-label="Créditos"
+              aria-describedby="nav-saldo"
+              className={`group relative block overflow-hidden rounded-xl border border-xp/25 bg-gradient-to-br from-xp/15 via-xp/5 to-transparent p-2 transition-colors hover:border-xp/50 lg:p-3 ${activo(pathname, "/creditos") ? "ring-1 ring-xp/60" : ""}`}
+            >
+              <span className="hidden items-center gap-2 text-xs font-medium uppercase tracking-wider text-xp/90 lg:flex">
+                <Coins className="size-3.5" aria-hidden />
+                Créditos
+              </span>
+              <span id="nav-saldo" className="mt-1 flex h-9 items-center">
+                <SaldoIndicator className="font-heading text-lg font-bold text-xp tabular lg:text-3xl" />
+              </span>
+              <span className="hidden text-xs text-muted-foreground lg:block">
+                Gana desafíos, gasta en IA
+              </span>
+            </Link>
+          </li>
+        </ul>
 
         <ul className="flex-1 space-y-1">
           {ITEMS.map(({ href, label, icon: Icon }) => {
