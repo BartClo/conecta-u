@@ -67,3 +67,15 @@ export async function apiFetchServerSafe<T>(
     data: response.ok ? ((await response.json()) as T) : null,
   };
 }
+
+/** Fetches `ruta(id)` for every group in parallel, keyed by group id. */
+export async function porGrupo<T>(
+  grupos: { id: string }[],
+  ruta: (id: string) => string,
+): Promise<Record<string, T>> {
+  return Object.fromEntries(
+    await Promise.all(
+      grupos.map(async (g) => [g.id, await apiFetchServer<T>(ruta(g.id))]),
+    ),
+  );
+}

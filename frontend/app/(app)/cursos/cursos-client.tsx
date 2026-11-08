@@ -1,7 +1,10 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { BookOpen, GraduationCap, Plus } from "lucide-react";
 import { useState } from "react";
+import { EmptyState } from "@/components/shared/empty-state";
+import { PageHeader } from "@/components/shared/page-header";
 import { CursoCard } from "@/components/cursos/curso-card";
 import { CursoFormModal } from "@/components/cursos/curso-form-modal";
 import { SemestreFormModal } from "@/components/cursos/semestre-form-modal";
@@ -68,40 +71,72 @@ export function CursosClient({
     setCursos((prev) => [...prev, nuevo]);
   }
 
+  const semestre = semestres.find((s) => s.id === semestreId);
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <select
-            value={semestreId ?? ""}
-            onChange={(e) => handleSelectSemestre(e.target.value)}
-            className="rounded border bg-background px-2 py-1"
-          >
-            {semestres.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.nombre}
-              </option>
-            ))}
-          </select>
-          <Button variant="link" onClick={() => setShowSemestreModal(true)}>
-            + Nuevo semestre
-          </Button>
-        </div>
-        {semestreId && (
-          <Button onClick={() => setShowCursoModal(true)}>Nuevo curso</Button>
-        )}
-      </div>
+      <PageHeader
+        icon={BookOpen}
+        tone="text-cyan"
+        eyebrow={semestre ? `Semestre ${semestre.nombre}` : "Tu malla"}
+        title="Cursos"
+        description="Organiza los ramos de cada semestre; aparecen en tu calendario y en tu constelación."
+        actions={
+          <>
+            {semestres.length > 0 && (
+              <label className="flex items-center gap-2 rounded-xl border bg-card/70 px-3 py-1.5 text-sm">
+                <GraduationCap className="size-4 text-cyan" aria-hidden />
+                <select
+                  aria-label="Semestre"
+                  value={semestreId ?? ""}
+                  onChange={(e) => handleSelectSemestre(e.target.value)}
+                  className="cursor-pointer bg-transparent py-1 font-medium outline-none"
+                >
+                  {semestres.map((s) => (
+                    <option key={s.id} value={s.id} className="bg-popover">
+                      {s.nombre}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => setShowSemestreModal(true)}
+            >
+              + Nuevo semestre
+            </Button>
+            {semestreId && (
+              <Button size="lg" onClick={() => setShowCursoModal(true)}>
+                <Plus aria-hidden />
+                Nuevo curso
+              </Button>
+            )}
+          </>
+        }
+      />
 
       {semestres.length === 0 ? (
-        <p className="text-muted-foreground">
-          Crea tu primer semestre para empezar a agregar cursos.
-        </p>
+        <EmptyState
+          icon={GraduationCap}
+          tono="text-cyan"
+          titulo="Empecemos por el semestre"
+          texto="Crea tu primer semestre para empezar a agregar cursos."
+        />
+      ) : cursos.length === 0 ? (
+        <EmptyState
+          icon={BookOpen}
+          tono="text-cyan"
+          titulo="Semestre sin cursos"
+          texto="Agrega tus ramos con «Nuevo curso» para verlos aquí y en tu calendario."
+        />
       ) : (
         <motion.div
           variants={staggerContainer}
           initial="initial"
           animate="animate"
-          className="grid grid-cols-3 gap-4"
+          className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
         >
           {cursos.map((c) => (
             <CursoCard key={c.id} curso={c} />

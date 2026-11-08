@@ -14,8 +14,11 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
+import { EmptyState } from "@/components/shared/empty-state";
+import { Panel } from "@/components/shared/panel";
+import { StatCard } from "@/components/shared/stat-card";
 import { Graph3D } from "@/components/dashboard/graph-3d";
-import { apiFetchServer } from "@/lib/api-server";
+import { apiFetchServer, porGrupo } from "@/lib/api-server";
 import {
   desafiosPendientes,
   mejoresPosiciones,
@@ -40,15 +43,6 @@ interface Me {
   name: string | null;
   email: string;
 }
-
-const porGrupo = async <T,>(grupos: Grupo[], ruta: (id: string) => string) =>
-  Object.fromEntries(
-    await Promise.all(
-      grupos.map(
-        async (g) => [g.id, await apiFetchServer<T>(ruta(g.id))] as const,
-      ),
-    ),
-  ) as Record<string, T>;
 
 export default async function DashboardPage() {
   const [me, semestres, grupos, saldo, movimientos] = await Promise.all([
@@ -94,7 +88,7 @@ export default async function DashboardPage() {
               : "Tu centro de mando"}
           </p>
           <h1 className="font-heading text-3xl font-bold tracking-tight lg:text-4xl">
-            Hola, {nombre}
+            Hola, {me.name?.split(" ")[0] ?? me.email}
           </h1>
         </div>
         <nav aria-label="Accesos rápidos" className="flex flex-wrap gap-2">
@@ -111,7 +105,7 @@ export default async function DashboardPage() {
       </header>
 
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat
+        <StatCard
           icon={Coins}
           tono="text-xp"
           borde="from-xp/20"
@@ -120,7 +114,7 @@ export default async function DashboardPage() {
           pie="para gastar en IA"
           href="/creditos"
         />
-        <Stat
+        <StatCard
           icon={Trophy}
           tono="text-gold"
           borde="from-gold/20"
@@ -129,7 +123,7 @@ export default async function DashboardPage() {
           pie={`${podios} ${podios === 1 ? "podio" : "podios"} en tus grupos`}
           href="/ranking"
         />
-        <Stat
+        <StatCard
           icon={Swords}
           tono="text-cyan"
           borde="from-cyan/20"
@@ -137,7 +131,7 @@ export default async function DashboardPage() {
           etiqueta="Desafíos por rendir"
           pie="abiertos en tus grupos"
         />
-        <Stat
+        <StatCard
           icon={Users}
           tono="text-primary"
           borde="from-primary/25"
@@ -149,16 +143,22 @@ export default async function DashboardPage() {
       </section>
 
       <section className="grid gap-4 xl:grid-cols-12">
-        <div className="relative h-[540px] overflow-hidden rounded-2xl border bg-[radial-gradient(ellipse_at_center,oklch(0.2_0.07_290)_0%,oklch(0.11_0.03_282)_75%)] xl:col-span-8">
+        <div className="relative h-[540px] overflow-hidden rounded-2xl border bg-[#030208] xl:col-span-8">
           {grupos.length + cursos.length > 0 ? (
             <Graph3D data={grafo} />
           ) : (
-            <Vacio
+            <EmptyState
               icon={Flame}
               titulo="Tu constelación está vacía"
               texto="Únete a un grupo o crea tus cursos y aquí verás crecer tu red: grupos, materias y compañeros."
-              href="/grupos"
-              cta="Explorar grupos"
+              action={
+                <Link
+                  href="/grupos"
+                  className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
+                >
+                  Explorar grupos <ArrowRight className="size-4" aria-hidden />
+                </Link>
+              }
             />
           )}
           <div className="pointer-events-none absolute left-4 top-4">
@@ -276,12 +276,18 @@ export default async function DashboardPage() {
         <div className="xl:col-span-8">
           <Panel titulo="Mis grupos" icon={Users} tono="text-primary">
             {grupos.length === 0 ? (
-              <Vacio
+              <EmptyState
                 icon={Users}
                 titulo="Aún no estás en ningún grupo"
                 texto="Los grupos son donde se compite: crea uno para tu materia o únete con el código de un compañero."
-                href="/grupos"
-                cta="Crear o unirme"
+                action={
+                  <Link
+                    href="/grupos"
+                    className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
+                  >
+                    Crear o unirme <ArrowRight className="size-4" aria-hidden />
+                  </Link>
+                }
               />
             ) : (
               <ul className="grid gap-3 sm:grid-cols-2">
@@ -388,110 +394,5 @@ function Accion({
       <Icon className="size-4" aria-hidden />
       {children}
     </Link>
-  );
-}
-
-function Stat({
-  icon: Icon,
-  tono,
-  borde,
-  valor,
-  etiqueta,
-  pie,
-  href,
-}: {
-  icon: LucideIcon;
-  tono: string;
-  borde: string;
-  valor: number;
-  etiqueta: string;
-  pie: string;
-  href?: string;
-}) {
-  const cuerpo = (
-    <>
-      <span className="flex items-center justify-between">
-        <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          {etiqueta}
-        </span>
-        <Icon className={`size-4 ${tono}`} aria-hidden />
-      </span>
-      <span
-        className={`mt-2 block font-heading text-4xl font-bold tabular ${tono}`}
-      >
-        {valor}
-      </span>
-      <span className="text-xs text-muted-foreground">{pie}</span>
-    </>
-  );
-  const clase = `block rounded-2xl border bg-gradient-to-br ${borde} to-card/40 p-4 transition-colors`;
-  return href ? (
-    <Link href={href} className={`${clase} hover:border-foreground/20`}>
-      {cuerpo}
-    </Link>
-  ) : (
-    <div className={clase}>{cuerpo}</div>
-  );
-}
-
-function Panel({
-  titulo,
-  icon: Icon,
-  tono,
-  href,
-  children,
-}: {
-  titulo: string;
-  icon: LucideIcon;
-  tono: string;
-  href?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="h-full rounded-2xl border bg-card/70 p-4 backdrop-blur">
-      <header className="mb-3 flex items-center gap-2">
-        <Icon className={`size-4 ${tono}`} aria-hidden />
-        <h2 className="font-heading text-base font-semibold">{titulo}</h2>
-        {href && (
-          <Link
-            href={href}
-            className="ml-auto text-xs text-muted-foreground hover:text-foreground"
-          >
-            Ver todo
-          </Link>
-        )}
-      </header>
-      {children}
-    </section>
-  );
-}
-
-function Vacio({
-  icon: Icon,
-  titulo,
-  texto,
-  href,
-  cta,
-}: {
-  icon: LucideIcon;
-  titulo: string;
-  texto: string;
-  href: string;
-  cta: string;
-}) {
-  return (
-    <div className="flex h-full flex-col items-center justify-center gap-3 p-8 text-center">
-      <span className="grid size-12 place-items-center rounded-2xl bg-primary/15 text-primary">
-        <Icon className="size-6" aria-hidden />
-      </span>
-      <p className="font-heading text-lg font-semibold">{titulo}</p>
-      <p className="max-w-sm text-sm text-muted-foreground">{texto}</p>
-      <Link
-        href={href}
-        className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
-      >
-        {cta} <ArrowRight className="size-4" aria-hidden />
-      </Link>
-    </div>
   );
 }

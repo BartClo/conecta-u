@@ -11,8 +11,9 @@ export default async function DesafiosPage({
   const { id } = await params;
   let desafios: DesafioOut[];
   let tests: Test[];
+  let grupo: GrupoDetalle;
   try {
-    const grupo = await apiFetchServer<GrupoDetalle>(`/api/grupos/${id}`);
+    grupo = await apiFetchServer<GrupoDetalle>(`/api/grupos/${id}`);
     [desafios, tests] = await Promise.all([
       apiFetchServer<DesafioOut[]>(`/api/grupos/${id}/desafios`),
       apiFetchServer<Test[]>(`/api/tests?materia_id=${grupo.materia_id}`),
@@ -25,6 +26,7 @@ export default async function DesafiosPage({
   return (
     <DesafiosClient
       grupoId={id}
+      grupoNombre={grupo.nombre}
       initialDesafios={desafios}
       testsDisponibles={tests.map((t) => ({ id: t.id, titulo: t.titulo }))}
     />

@@ -1,6 +1,8 @@
 "use client";
 
+import { Pencil } from "lucide-react";
 import Link from "next/link";
+import { PageHeader } from "@/components/shared/page-header";
 import { useRouter } from "next/navigation";
 import { TestEditor, toFormValues } from "@/components/tests/test-editor";
 import { apiFetchClient } from "@/lib/api-client";
@@ -46,7 +48,12 @@ export function TestEditarClient({ test, userId }: TestEditarClientProps) {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Editar test</h1>
+      <PageHeader
+        back={{ href: `${base}/${test.id}`, label: test.titulo }}
+        icon={Pencil}
+        eyebrow="Editor"
+        title="Editar test"
+      />
       <TestEditor
         materiaId={test.materia_id}
         defaultValues={toFormValues(test)}

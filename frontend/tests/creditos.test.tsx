@@ -108,8 +108,8 @@ describe("CreditosClient", () => {
 
     expect(screen.getByText("Ganaste un desafío")).toBeInTheDocument();
     expect(screen.getByText("Generaste un test con IA")).toBeInTheDocument();
-    expect(screen.getByText("+15")).toHaveClass("text-green-600");
-    expect(screen.getByText("-20")).toHaveClass("text-red-600");
+    expect(screen.getByText("+15")).toHaveClass("text-xp");
+    expect(screen.getByText("-20")).toHaveClass("text-destructive");
     expect(screen.getByText("Saldo: 115")).toBeInTheDocument();
     expect(screen.getByText("95")).toBeInTheDocument(); // big saldo
   });

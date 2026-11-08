@@ -169,7 +169,7 @@ export function Graph3D({ data }: { data: GraphData }) {
     listo.current = true;
     g.scene().add(estrellas());
     g.postProcessingComposer().addPass(
-      new UnrealBloomPass(new THREE.Vector2(256, 256), 1.1, 0.5, 0.55),
+      new UnrealBloomPass(new THREE.Vector2(256, 256), 0.9, 0.4, 0.72),
     );
     g.d3Force("charge")?.strength(-140);
     g.d3Force("link")?.distance(38);
@@ -206,7 +206,7 @@ export function Graph3D({ data }: { data: GraphData }) {
           height={size.h}
           graphData={grafo}
           controlType="orbit"
-          backgroundColor="#070514"
+          backgroundColor="#000000"
           showNavInfo={false}
           nodeThreeObject={(n: object) => nodoObjeto(n as Nodo)}
           nodeLabel={(n: object) => tooltip(n as Nodo)}

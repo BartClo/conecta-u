@@ -2,10 +2,12 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
+import { Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { PageHeader } from "@/components/shared/page-header";
 import { CostoBadge } from "@/components/ia/costo-badge";
 import { GenerandoOverlay } from "@/components/ia/generando-overlay";
 import { Button } from "@/components/ui/button";
@@ -84,10 +86,20 @@ export function TestIaClient({ materiaId }: { materiaId: string }) {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Generar test con IA</h1>
+      <PageHeader
+        back={{
+          href: `/materias/${materiaId}/tests`,
+          label: "Tests de la materia",
+        }}
+        icon={Sparkles}
+        tone="text-xp"
+        eyebrow="Asistente IA"
+        title="Generar test con IA"
+        description="Dale un tema o pega tus apuntes y obtén un test listo para desafiar a tu grupo."
+      />
       <form
         onSubmit={handleSubmit(onValid)}
-        className="relative max-w-xl rounded-xl"
+        className="relative max-w-2xl overflow-hidden rounded-3xl border bg-card/70 p-6"
       >
         <fieldset disabled={pending} className="space-y-4 disabled:opacity-50">
           <div className="space-y-1">
@@ -123,7 +135,13 @@ export function TestIaClient({ materiaId }: { materiaId: string }) {
           </div>
           <CostoBadge costo={COSTO_GENERAR_TEST_IA} saldo={saldo} />
           {error && <p className="text-sm text-destructive">{error}</p>}
-          <Button type="submit" disabled={sinSaldo}>
+          <Button
+            type="submit"
+            size="lg"
+            disabled={sinSaldo}
+            className="bg-xp text-background hover:bg-xp/85"
+          >
+            <Sparkles aria-hidden />
             Generar test
           </Button>
         </fieldset>

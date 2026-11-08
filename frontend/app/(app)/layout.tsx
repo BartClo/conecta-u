@@ -20,7 +20,7 @@ export default async function AppLayout({
   return (
     <div className="flex min-h-screen">
       <NavSidebar userName={me.name} userEmail={me.email} />
-      <main className="min-w-0 flex-1 px-8 py-7">
+      <main className="min-w-0 flex-1 px-4 py-6 md:px-8 md:py-7">
         <div className="mx-auto w-full max-w-7xl">{children}</div>
       </main>
     </div>

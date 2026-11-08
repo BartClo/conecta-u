@@ -1,4 +1,6 @@
+import { Lock } from "lucide-react";
 import Link from "next/link";
+import { buttonVariants } from "@/components/ui/button";
 import { RendirClient } from "./rendir-client";
 import { ResultadoClient } from "./resultado-client";
 import { DesafioRanking } from "@/components/desafios/desafio-ranking";
@@ -65,16 +67,24 @@ export default async function DesafioPage({
   }
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-semibold">
-        {rendir.status === 409
-          ? "Este desafío no está disponible"
-          : "Desafío no encontrado"}
-      </h1>
+    <div className="mx-auto max-w-2xl space-y-4">
+      <div className="flex flex-col items-center gap-3 rounded-3xl border border-dashed bg-card/40 p-10 text-center">
+        <span className="grid size-14 place-items-center rounded-2xl bg-muted text-muted-foreground">
+          <Lock className="size-7" aria-hidden />
+        </span>
+        <h1 className="font-heading text-2xl font-bold">
+          {rendir.status === 409
+            ? "Este desafío no está disponible"
+            : "Desafío no encontrado"}
+        </h1>
+        <Link
+          href={`/grupos/${id}/desafios`}
+          className={buttonVariants({ variant: "outline", size: "lg" })}
+        >
+          Volver a desafíos
+        </Link>
+      </div>
       {rendir.status === 409 && (await seccionRanking(desafioId, false))}
-      <Link href={`/grupos/${id}/desafios`} className="underline">
-        Volver a desafíos
-      </Link>
     </div>
   );
 }

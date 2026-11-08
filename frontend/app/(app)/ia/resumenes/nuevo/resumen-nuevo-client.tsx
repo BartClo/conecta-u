@@ -2,10 +2,12 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
+import { Check, Lightbulb, ScrollText, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { PageHeader } from "@/components/shared/page-header";
 import { CostoBadge } from "@/components/ia/costo-badge";
 import { GenerandoOverlay } from "@/components/ia/generando-overlay";
 import { Button } from "@/components/ui/button";
@@ -41,6 +43,7 @@ export function ResumenNuevoClient() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -77,42 +80,82 @@ export function ResumenNuevoClient() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Nuevo resumen con IA</h1>
-      <form
-        onSubmit={handleSubmit(onValid)}
-        className="relative max-w-xl rounded-xl"
-      >
-        <fieldset disabled={pending} className="space-y-4 disabled:opacity-50">
-          <div className="space-y-1">
-            <Label htmlFor="titulo">Título (opcional)</Label>
-            <Input id="titulo" {...register("titulo")} />
-            {errors.titulo && (
-              <p className="text-sm text-destructive">
-                {errors.titulo.message}
+      <PageHeader
+        back={{ href: "/ia/resumenes", label: "Mis resúmenes" }}
+        icon={ScrollText}
+        tone="text-xp"
+        eyebrow="Asistente IA"
+        title="Nuevo resumen con IA"
+        description="Pega un texto largo y recibe sus ideas clave en segundos."
+      />
+      <div className="grid gap-4 lg:grid-cols-3">
+        <form
+          onSubmit={handleSubmit(onValid)}
+          className="relative overflow-hidden rounded-3xl border bg-card/70 p-6 lg:col-span-2"
+        >
+          <fieldset
+            disabled={pending}
+            className="space-y-4 disabled:opacity-50"
+          >
+            <div className="space-y-1">
+              <Label htmlFor="titulo">Título (opcional)</Label>
+              <Input id="titulo" {...register("titulo")} />
+              {errors.titulo && (
+                <p className="text-sm text-destructive">
+                  {errors.titulo.message}
+                </p>
+              )}
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="texto_fuente">Texto a resumir</Label>
+              <Textarea
+                id="texto_fuente"
+                rows={12}
+                className="min-h-64"
+                {...register("texto_fuente")}
+              />
+              <p className="text-right text-xs text-muted-foreground tabular">
+                {(watch("texto_fuente") ?? "").trim().length} / 50000 caracteres
               </p>
-            )}
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="texto_fuente">Texto a resumir</Label>
-            <Textarea
-              id="texto_fuente"
-              rows={10}
-              {...register("texto_fuente")}
-            />
-            {errors.texto_fuente && (
-              <p className="text-sm text-destructive">
-                {errors.texto_fuente.message}
-              </p>
-            )}
-          </div>
-          <CostoBadge costo={COSTO_GENERAR_RESUMEN_IA} saldo={saldo} />
-          {error && <p className="text-sm text-destructive">{error}</p>}
-          <Button type="submit" disabled={sinSaldo}>
-            Generar resumen
-          </Button>
-        </fieldset>
-        {pending && <GenerandoOverlay tipo="resumen" />}
-      </form>
+              {errors.texto_fuente && (
+                <p className="text-sm text-destructive">
+                  {errors.texto_fuente.message}
+                </p>
+              )}
+            </div>
+            <CostoBadge costo={COSTO_GENERAR_RESUMEN_IA} saldo={saldo} />
+            {error && <p className="text-sm text-destructive">{error}</p>}
+            <Button
+              type="submit"
+              size="lg"
+              disabled={sinSaldo}
+              className="bg-xp text-background hover:bg-xp/85"
+            >
+              <Sparkles aria-hidden />
+              Generar resumen
+            </Button>
+          </fieldset>
+          {pending && <GenerandoOverlay tipo="resumen" />}
+        </form>
+        <aside className="h-fit space-y-4 rounded-3xl border border-xp/20 bg-gradient-to-br from-xp/10 to-card/50 p-5">
+          <h2 className="flex items-center gap-2 font-heading text-base font-semibold">
+            <Lightbulb className="size-4 text-gold" aria-hidden />
+            Para un mejor resumen
+          </h2>
+          <ul className="space-y-3 text-sm text-muted-foreground">
+            {[
+              "Pega texto limpio: apuntes, un capítulo o la transcripción de una clase.",
+              "Un título claro te ayuda a encontrarlo después en tu biblioteca.",
+              "Entre más contexto, mejor: mínimo 50 caracteres.",
+            ].map((t) => (
+              <li key={t} className="flex gap-2">
+                <Check className="mt-0.5 size-4 shrink-0 text-xp" aria-hidden />
+                {t}
+              </li>
+            ))}
+          </ul>
+        </aside>
+      </div>
     </div>
   );
 }

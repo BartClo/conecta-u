@@ -1,5 +1,13 @@
 "use client";
 
+import {
+  ArrowLeft,
+  CalendarDays,
+  Pencil,
+  Trash2,
+  UserRound,
+} from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { CursoFormModal } from "@/components/cursos/curso-form-modal";
@@ -33,27 +41,78 @@ export function CursoDetalleClient({ curso: initialCurso }: { curso: Curso }) {
     router.push("/cursos");
   }
 
-  return (
-    <div className="space-y-4">
-      <div
-        className="rounded-xl border p-4"
-        style={{ borderLeft: `4px solid ${COLOR_SWATCH[curso.color]}` }}
-      >
-        <h1 className="text-xl font-semibold">{curso.nombre}</h1>
-        <p className="text-muted-foreground">{curso.codigo}</p>
-        {curso.profesor && (
-          <p className="text-muted-foreground">{curso.profesor}</p>
-        )}
-      </div>
+  const color = COLOR_SWATCH[curso.color];
 
-      <div className="flex gap-2">
-        <Button variant="outline" onClick={() => setShowEditModal(true)}>
-          Editar
-        </Button>
-        <Button variant="destructive" onClick={handleDelete}>
-          Borrar
-        </Button>
-      </div>
+  return (
+    <div className="space-y-6">
+      <section
+        className="relative overflow-hidden rounded-3xl border p-6 lg:p-8"
+        style={{
+          backgroundImage: `linear-gradient(135deg, ${color}40, transparent 70%)`,
+        }}
+      >
+        <span className="bg-grid absolute inset-0 opacity-40" aria-hidden />
+        <span
+          className="absolute inset-y-0 left-0 w-1.5"
+          style={{ background: color }}
+          aria-hidden
+        />
+        <div className="relative space-y-3">
+          <Link
+            href="/cursos"
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="size-4" aria-hidden />
+            Mis cursos
+          </Link>
+          <p
+            className="w-fit rounded-lg px-2 py-1 font-mono text-xs font-bold"
+            style={{ background: `${color}33`, color }}
+          >
+            {curso.codigo}
+          </p>
+          <h1 className="font-heading text-4xl font-bold tracking-tight break-words">
+            {curso.nombre}
+          </h1>
+          {curso.profesor && (
+            <p className="flex items-center gap-1.5 text-muted-foreground">
+              <UserRound className="size-4" aria-hidden />
+              {curso.profesor}
+            </p>
+          )}
+          <div className="flex flex-wrap gap-2 pt-2">
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => setShowEditModal(true)}
+            >
+              <Pencil aria-hidden />
+              Editar
+            </Button>
+            <Button variant="destructive" size="lg" onClick={handleDelete}>
+              <Trash2 aria-hidden />
+              Borrar
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      <Link
+        href="/calendario"
+        className="flex items-center gap-4 rounded-2xl border bg-card/70 p-4 transition-colors hover:border-cyan/50"
+      >
+        <span className="grid size-11 place-items-center rounded-xl bg-cyan/15 text-cyan">
+          <CalendarDays className="size-5" aria-hidden />
+        </span>
+        <span className="flex-1">
+          <span className="block font-heading font-semibold">
+            Agenda sus evaluaciones
+          </span>
+          <span className="block text-sm text-muted-foreground">
+            Crea exámenes, entregas y clases del curso en tu calendario.
+          </span>
+        </span>
+      </Link>
 
       {showEditModal && (
         <CursoFormModal

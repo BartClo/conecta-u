@@ -1,6 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { FilePlus2 } from "lucide-react";
+import { PageHeader } from "@/components/shared/page-header";
 import { TestEditor } from "@/components/tests/test-editor";
 import { apiFetchClient } from "@/lib/api-client";
 import type { Test, TestPayload } from "@/lib/types";
@@ -18,7 +20,16 @@ export function TestNuevoClient({ materiaId }: { materiaId: string }) {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Nuevo test</h1>
+      <PageHeader
+        back={{
+          href: `/materias/${materiaId}/tests`,
+          label: "Tests de la materia",
+        }}
+        icon={FilePlus2}
+        eyebrow="Editor"
+        title="Nuevo test"
+        description="Escribe las preguntas y marca la opción correcta de cada una."
+      />
       <TestEditor
         materiaId={materiaId}
         submitLabel="Crear test"
